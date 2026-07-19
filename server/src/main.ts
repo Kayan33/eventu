@@ -1,7 +1,7 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import {SwaggerModule, DocumentBuilder} from '@nestjs/swagger'
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
@@ -10,7 +10,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin: process.env.FRONTEND_URL?.split(',') ?? '*',
-  })
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -18,11 +18,9 @@ async function bootstrap() {
       transform: true,
       forbidNonWhitelisted: true,
     }),
-  )
+  );
 
-  app.useGlobalInterceptors(
-    new ClassSerializerInterceptor(app.get(Reflector)),
-  )
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   app.setGlobalPrefix('api');
 
@@ -32,8 +30,11 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
 
-    const document = () => SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('api/docs', app, document)
+  const document = () => SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document);
   await app.listen(process.env.PORT ?? 3001);
 }
-bootstrap();
+bootstrap().catch((error: unknown) => {
+  console.error('Failed to start application', error);
+  process.exit(1);
+});

@@ -3,6 +3,9 @@
 /node_modules
 /build
 
+# docker volumes
+/postgres-data
+
 # yarn
 /.pnp.*
 .yarn/*
