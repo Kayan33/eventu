@@ -1,8 +1,18 @@
 import { Module } from '@nestjs/common';
 import { dataSourceOptions } from './database/typeorm.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserModule } from './modules/users/users.module';
 import { LoggerModule } from 'nestjs-pino';
+import { TenantsModule } from './modules/tenants/tenants.module';
+import { UsersModule } from './modules/users/users.module';
+import { ClientsModule } from './modules/clients/clients.module';
+import { EventsModule } from './modules/events/events.module';
+import { EventFormFieldsModule } from './modules/event-form-fields/event-form-fields.module';
+import { TicketTypesModule } from './modules/ticket-types/ticket-types.module';
+import { PricingRulesModule } from './modules/pricing-rules/pricing-rules.module';
+import { TicketFormResponsesModule } from './modules/ticket-form-responses/ticket-form-responses.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { CertificatesModule } from './modules/certificates/certificates.module';
 
 @Module({
   imports: [
@@ -21,7 +31,17 @@ import { LoggerModule } from 'nestjs-pino';
       ...dataSourceOptions,
       autoLoadEntities: true,
     }),
-    UserModule,
+    TenantsModule,
+    UsersModule,
+    ClientsModule,
+    EventsModule,
+    EventFormFieldsModule,
+    TicketTypesModule,
+    PricingRulesModule,
+    TicketFormResponsesModule,
+    TicketsModule,
+    PaymentsModule,
+    CertificatesModule,
   ],
 })
 export class AppModule {}

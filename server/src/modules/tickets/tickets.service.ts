@@ -1,0 +1,120 @@
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { Ticket } from './entities/ticket.entity';
+import { TicketType } from '../ticket-types/entities/ticket-type.entity';
+import { PricingRule } from '../pricing-rules/entities/pricing-rule.entity';
+import { TicketFormResponse } from '../ticket-form-responses/entities/ticket-form-response.entity';
+import { Payment } from '../payments/entities/payment.entity';
+import { CreateTicketDto } from './dto/create-ticket.dto';
+import { TicketStatus } from '../../common/enums/ticket-status.enum';
+import { PaymentStatus } from '../../common/enums/payment-status.enum';
+import { generateCode } from '../../common/utils/random-code.util';
+
+const PAYMENT_EXPIRATION_MINUTES = 30;
+
+@Injectable()
+export class TicketsService {
+  constructor(
+    @InjectRepository(Ticket)
+    private readonly ticketRepository: Repository<Ticket>,
+    @InjectDataSource() private readonly dataSource: DataSource,
+  ) {}
+
+  async create(dto: CreateTicketDto): Promise<Ticket> {
+    return await this.dataSource.transaction(async (manager) => {
+      const ticketType = await manager.findOne(TicketType, {
+        where: { id: dto.ticketTypeId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!ticketType) {
+        throw new NotFoundException('Ticket type not found');
+      }
+      if (ticketType.sold >= ticketType.quantity) {
+        throw new BadRequestException('This ticket type is sold out');
+      }
+
+      let finalPrice = ticketType.basePrice;
+      for (const response of dto.formResponses) {
+        const matchingRule = await manager.findOne(PricingRule, {
+          where: {
+            ticketTypeId: dto.ticketTypeId,
+            formFieldId: response.formFieldId,
+            fieldValue: response.value,
+          },
+        });
+        if (matchingRule) {
+          finalPrice = matchingRule.price;
+          break;
+        }
+      }
+
+      const ticket = manager.create(Ticket, {
+        ticketTypeId: dto.ticketTypeId,
+        clientId: dto.clientId,
+        code: generateCode('EVT'),
+        finalPrice,
+        status: TicketStatus.RESERVED,
+      });
+      await manager.save(ticket);
+
+      const formResponses = dto.formResponses.map((response) =>
+        manager.create(TicketFormResponse, {
+          ticketId: ticket.id,
+          formFieldId: response.formFieldId,
+          value: response.value,
+        }),
+      );
+      await manager.save(formResponses);
+
+      ticketType.sold += 1;
+      await manager.save(ticketType);
+
+      if (Number(finalPrice) > 0) {
+        const expiresAt = new Date();
+        expiresAt.setMinutes(
+          expiresAt.getMinutes() + PAYMENT_EXPIRATION_MINUTES,
+        );
+
+        const payment = manager.create(Payment, {
+          ticketId: ticket.id,
+          amount: finalPrice,
+          status: PaymentStatus.PENDING,
+          expiresAt,
+        });
+        await manager.save(payment);
+      }
+
+      return ticket;
+    });
+  }
+
+  async findAll(): Promise<Ticket[]> {
+    return await this.ticketRepository.find();
+  }
+
+  async findOne(id: string): Promise<Ticket> {
+    const ticket = await this.ticketRepository.findOne({
+      where: { id },
+      relations: { formResponses: true, payment: true, ticketType: true },
+    });
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+    return ticket;
+  }
+
+  async checkIn(id: string): Promise<Ticket> {
+    const ticket = await this.findOne(id);
+    if (ticket.status !== TicketStatus.CONFIRMED) {
+      throw new BadRequestException('Only confirmed tickets can be checked in');
+    }
+    ticket.checkedInAt = new Date();
+    ticket.status = TicketStatus.USED;
+    return await this.ticketRepository.save(ticket);
+  }
+}
