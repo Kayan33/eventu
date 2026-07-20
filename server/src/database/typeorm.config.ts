@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
@@ -10,6 +11,7 @@ export const dataSourceOptions: DataSourceOptions = {
   database: process.env.POSTGRES_DB,
   synchronize: true,
   logging: true,
+  namingStrategy: new SnakeNamingStrategy(),
   entities: [__dirname + '/../modules/**/*.entity.{ts,js}'],
   migrations: [__dirname + '/migrations/*.{ts,js}'],
 };
