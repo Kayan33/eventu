@@ -3,22 +3,18 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  JoinColumn,
-  ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { UserRole } from '../../../common/enums/user-role.enum';
-import { Tenant } from '../../tenants/entities/tenant.entity';
+import { Ticket } from '../../tickets/entities/ticket.entity';
+import { Certificate } from '../../certificates/entities/certificate.entity';
 
-@Entity('users')
-export class User {
+@Entity('clients')
+export class Client {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
-
-  @Column()
-  tenantId!: string;
 
   @Column()
   name!: string;
@@ -30,11 +26,8 @@ export class User {
   @Column()
   passwordHash!: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.EDITOR })
-  role!: UserRole;
-
-  @Column({ default: true })
-  isActive!: boolean;
+  @Column({ unique: true })
+  cpf!: string;
 
   @CreateDateColumn()
   createdAt!: Date;
@@ -45,7 +38,9 @@ export class User {
   @DeleteDateColumn()
   deletedAt?: Date;
 
-  @ManyToOne(() => Tenant, (tenant) => tenant.users)
-  @JoinColumn({ name: 'tenant_id' })
-  tenant!: Tenant;
+  @OneToMany(() => Ticket, (ticket) => ticket.client)
+  tickets!: Ticket[];
+
+  @OneToMany(() => Certificate, (certificate) => certificate.client)
+  certificates!: Certificate[];
 }
