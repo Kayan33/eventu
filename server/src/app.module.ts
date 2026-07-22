@@ -13,6 +13,7 @@ import { TicketFormResponsesModule } from './modules/ticket-form-responses/ticke
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { CertificatesModule } from './modules/certificates/certificates.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { CertificatesModule } from './modules/certificates/certificates.module';
     TicketsModule,
     PaymentsModule,
     CertificatesModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
