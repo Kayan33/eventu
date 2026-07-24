@@ -6,13 +6,13 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import * as argon2 from 'argon2';
 import { UsersService } from '../users/users.service';
 import { ClientsService } from '../clients/clients.service';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { slugify } from '../../common/utils/slugify.util';
+import { hashPassword, verifyPassword } from '../../common/utils/password.util';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import {
@@ -53,9 +53,7 @@ export class AuthService {
       });
       await manager.save(tenant);
 
-      const passwordHash = (await argon2.hash(dto.password, {
-        type: argon2.argon2id,
-      })) as string;
+      const passwordHash = await hashPassword(dto.password);
 
       const user = manager.create(User, {
         tenantId: tenant.id,
@@ -78,7 +76,7 @@ export class AuthService {
 
   async loginUser(dto: LoginDto): Promise<{ accessToken: string }> {
     const user = await this.usersService.findByEmail(dto.email);
-    if (!user || !(await argon2.verify(user.passwordHash, dto.password))) {
+    if (!user || !(await verifyPassword(user.passwordHash, dto.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -93,7 +91,7 @@ export class AuthService {
 
   async loginClient(dto: LoginDto): Promise<{ accessToken: string }> {
     const client = await this.clientsService.findByEmail(dto.email);
-    if (!client || !(await argon2.verify(client.passwordHash, dto.password))) {
+    if (!client || !(await verifyPassword(client.passwordHash, dto.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
 

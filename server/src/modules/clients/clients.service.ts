@@ -5,10 +5,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as argon2 from 'argon2';
 import { Client } from './entities/client.entity';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { hashPassword } from '../../common/utils/password.util';
 
 @Injectable()
 export class ClientsService {
@@ -32,9 +32,7 @@ export class ClientsService {
       throw new ConflictException('Client with this CPF already exists');
     }
 
-    const passwordHash = (await argon2.hash(dto.password, {
-      type: argon2.argon2id,
-    })) as string;
+    const passwordHash = await hashPassword(dto.password);
 
     const client = this.clientRepository.create({
       name: dto.name,
@@ -105,9 +103,7 @@ export class ClientsService {
     }
 
     const { password, ...rest } = dto;
-    const passwordHash = password
-      ? ((await argon2.hash(password, { type: argon2.argon2id })) as string)
-      : undefined;
+    const passwordHash = password ? await hashPassword(password) : undefined;
 
     Object.assign(client, { ...rest, ...(passwordHash && { passwordHash }) });
     return await this.clientRepository.save(client);

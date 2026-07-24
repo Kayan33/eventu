@@ -5,10 +5,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as argon2 from 'argon2';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { hashPassword } from '../../common/utils/password.util';
 
 @Injectable()
 export class UsersService {
@@ -24,9 +24,7 @@ export class UsersService {
       throw new ConflictException('User already exists');
     }
 
-    const passwordHash = (await argon2.hash(dto.password, {
-      type: argon2.argon2id,
-    })) as string;
+    const passwordHash = await hashPassword(dto.password);
 
     const user = this.userRepository.create({
       tenantId,
@@ -73,9 +71,7 @@ export class UsersService {
     }
 
     const { password, ...rest } = dto;
-    const passwordHash = password
-      ? ((await argon2.hash(password, { type: argon2.argon2id })) as string)
-      : undefined;
+    const passwordHash = password ? await hashPassword(password) : undefined;
 
     Object.assign(user, { ...rest, ...(passwordHash && { passwordHash }) });
     return await this.userRepository.save(user);
