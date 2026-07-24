@@ -15,6 +15,11 @@ import {
   UpdatePaymentStatusDto,
 } from './dto/update-payment-status.dto';
 
+export interface PaymentScope {
+  clientId?: string;
+  tenantId?: string;
+}
+
 @Injectable()
 export class PaymentsService {
   constructor(
@@ -24,22 +29,55 @@ export class PaymentsService {
     private readonly ticketRepository: Repository<Ticket>,
   ) {}
 
-  async findByStatus(status?: PaymentStatus): Promise<Payment[]> {
-    return await this.paymentRepository.find({
-      where: status ? { status } : {},
-    });
+  async findByStatus(
+    status?: PaymentStatus,
+    scope: PaymentScope = {},
+  ): Promise<Payment[]> {
+    const qb = this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoin('payment.ticket', 'ticket');
+
+    if (status) {
+      qb.andWhere('payment.status = :status', { status });
+    }
+    if (scope.clientId) {
+      qb.andWhere('ticket.clientId = :clientId', { clientId: scope.clientId });
+    }
+    if (scope.tenantId) {
+      qb.innerJoin('ticket.ticketType', 'ticketType')
+        .innerJoin('ticketType.event', 'event')
+        .andWhere('event.tenantId = :tenantId', { tenantId: scope.tenantId });
+    }
+
+    return await qb.getMany();
   }
 
-  async findOne(id: string): Promise<Payment> {
-    const payment = await this.paymentRepository.findOne({ where: { id } });
+  async findOne(id: string, scope: PaymentScope = {}): Promise<Payment> {
+    const payment = await this.paymentRepository.findOne({
+      where: { id },
+      relations: { ticket: { ticketType: { event: true } } },
+    });
     if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+    if (scope.clientId && payment.ticket.clientId !== scope.clientId) {
+      throw new NotFoundException('Payment not found');
+    }
+    if (
+      scope.tenantId &&
+      payment.ticket.ticketType.event.tenantId !== scope.tenantId
+    ) {
       throw new NotFoundException('Payment not found');
     }
     return payment;
   }
 
-  async upload(id: string, dto: UploadPaymentDto): Promise<Payment> {
-    const payment = await this.findOne(id);
+  async upload(
+    id: string,
+    dto: UploadPaymentDto,
+    clientId: string,
+  ): Promise<Payment> {
+    const payment = await this.findOne(id, { clientId });
     if (payment.status !== PaymentStatus.PENDING) {
       throw new BadRequestException(
         'Only pending payments can receive a receipt',
@@ -52,8 +90,12 @@ export class PaymentsService {
     return await this.paymentRepository.save(payment);
   }
 
-  async review(id: string, dto: UpdatePaymentStatusDto): Promise<Payment> {
-    const payment = await this.findOne(id);
+  async review(
+    id: string,
+    dto: UpdatePaymentStatusDto,
+    tenantId: string,
+  ): Promise<Payment> {
+    const payment = await this.findOne(id, { tenantId });
     if (payment.status !== PaymentStatus.UPLOADED) {
       throw new BadRequestException('Only uploaded payments can be reviewed');
     }

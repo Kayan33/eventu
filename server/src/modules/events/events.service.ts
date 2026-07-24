@@ -19,7 +19,7 @@ export class EventsService {
     private readonly eventRepository: Repository<Event>,
   ) {}
 
-  async create(dto: CreateEventDto): Promise<Event> {
+  async create(dto: CreateEventDto, tenantId: string): Promise<Event> {
     const slug = slugify(dto.title);
 
     const exists = await this.eventRepository.findOne({ where: { slug } });
@@ -28,7 +28,7 @@ export class EventsService {
     }
 
     const event = this.eventRepository.create({
-      tenantId: dto.tenantId,
+      tenantId,
       title: dto.title,
       slug,
       description: dto.description,
@@ -39,23 +39,29 @@ export class EventsService {
     return await this.eventRepository.save(event);
   }
 
-  async findAll(): Promise<Event[]> {
-    return await this.eventRepository.find();
+  async findAll(tenantId?: string): Promise<Event[]> {
+    return await this.eventRepository.find(
+      tenantId ? { where: { tenantId } } : {},
+    );
   }
 
-  async findOne(id: string): Promise<Event> {
+  async findOne(id: string, tenantId?: string): Promise<Event> {
     const event = await this.eventRepository.findOne({
       where: { id },
       relations: { ticketTypes: true, formFields: true },
     });
-    if (!event) {
+    if (!event || (tenantId && event.tenantId !== tenantId)) {
       throw new NotFoundException('Event not found');
     }
     return event;
   }
 
-  async update(id: string, dto: UpdateEventDto): Promise<Event> {
-    const event = await this.findOne(id);
+  async update(
+    id: string,
+    dto: UpdateEventDto,
+    tenantId: string,
+  ): Promise<Event> {
+    const event = await this.findOne(id, tenantId);
 
     const { startDate, endDate, ...rest } = dto;
     Object.assign(event, {
@@ -66,8 +72,8 @@ export class EventsService {
     return await this.eventRepository.save(event);
   }
 
-  async remove(id: string): Promise<void> {
-    const event = await this.findOne(id);
+  async remove(id: string, tenantId: string): Promise<void> {
+    const event = await this.findOne(id, tenantId);
     if (event.status !== EventStatus.DRAFT) {
       throw new BadRequestException('Only draft events can be deleted');
     }

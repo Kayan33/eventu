@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Certificate } from './entities/certificate.entity';
 import { Ticket } from '../tickets/entities/ticket.entity';
+import { Event } from '../events/entities/event.entity';
 import { CreateCertificateDto } from './dto/create-certificate.dto';
 import { generateCode } from '../../common/utils/random-code.util';
 
@@ -17,13 +18,18 @@ export class CertificatesService {
     private readonly certificateRepository: Repository<Certificate>,
     @InjectRepository(Ticket)
     private readonly ticketRepository: Repository<Ticket>,
+    @InjectRepository(Event)
+    private readonly eventRepository: Repository<Event>,
   ) {}
 
-  async create(dto: CreateCertificateDto): Promise<Certificate> {
+  async create(
+    dto: CreateCertificateDto,
+    clientId: string,
+  ): Promise<Certificate> {
     const checkedInTicket = await this.ticketRepository
       .createQueryBuilder('ticket')
       .innerJoin('ticket.ticketType', 'ticketType')
-      .where('ticket.clientId = :clientId', { clientId: dto.clientId })
+      .where('ticket.clientId = :clientId', { clientId })
       .andWhere('ticketType.eventId = :eventId', { eventId: dto.eventId })
       .andWhere('ticket.checkedInAt IS NOT NULL')
       .getOne();
@@ -34,13 +40,24 @@ export class CertificatesService {
 
     const certificate = this.certificateRepository.create({
       eventId: dto.eventId,
-      clientId: dto.clientId,
+      clientId,
       code: generateCode('CERT'),
     });
     return await this.certificateRepository.save(certificate);
   }
 
-  async findByEvent(eventId: string): Promise<Certificate[]> {
+  async findByEvent(
+    eventId: string,
+    tenantId?: string,
+  ): Promise<Certificate[]> {
+    if (tenantId) {
+      const event = await this.eventRepository.findOne({
+        where: { id: eventId },
+      });
+      if (!event || event.tenantId !== tenantId) {
+        throw new NotFoundException('Event not found');
+      }
+    }
     return await this.certificateRepository.find({ where: { eventId } });
   }
 

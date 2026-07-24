@@ -17,6 +17,11 @@ import { generateCode } from '../../common/utils/random-code.util';
 
 const PAYMENT_EXPIRATION_MINUTES = 30;
 
+export interface TicketScope {
+  clientId?: string;
+  tenantId?: string;
+}
+
 @Injectable()
 export class TicketsService {
   constructor(
@@ -93,23 +98,46 @@ export class TicketsService {
     });
   }
 
-  async findAll(): Promise<Ticket[]> {
+  async findAll(scope: TicketScope = {}): Promise<Ticket[]> {
+    if (scope.clientId) {
+      return await this.ticketRepository.find({
+        where: { clientId: scope.clientId },
+      });
+    }
+    if (scope.tenantId) {
+      return await this.ticketRepository
+        .createQueryBuilder('ticket')
+        .innerJoin('ticket.ticketType', 'ticketType')
+        .innerJoin('ticketType.event', 'event')
+        .where('event.tenantId = :tenantId', { tenantId: scope.tenantId })
+        .getMany();
+    }
     return await this.ticketRepository.find();
   }
 
-  async findOne(id: string): Promise<Ticket> {
+  async findOne(id: string, scope: TicketScope = {}): Promise<Ticket> {
     const ticket = await this.ticketRepository.findOne({
       where: { id },
-      relations: { formResponses: true, payment: true, ticketType: true },
+      relations: {
+        formResponses: true,
+        payment: true,
+        ticketType: { event: true },
+      },
     });
     if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+    if (scope.clientId && ticket.clientId !== scope.clientId) {
+      throw new NotFoundException('Ticket not found');
+    }
+    if (scope.tenantId && ticket.ticketType.event.tenantId !== scope.tenantId) {
       throw new NotFoundException('Ticket not found');
     }
     return ticket;
   }
 
-  async checkIn(id: string): Promise<Ticket> {
-    const ticket = await this.findOne(id);
+  async checkIn(id: string, tenantId: string): Promise<Ticket> {
+    const ticket = await this.findOne(id, { tenantId });
     if (ticket.status !== TicketStatus.CONFIRMED) {
       throw new BadRequestException('Only confirmed tickets can be checked in');
     }

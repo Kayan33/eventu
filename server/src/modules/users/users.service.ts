@@ -16,7 +16,7 @@ export class UsersService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(dto: CreateUserDto): Promise<User> {
+  async create(dto: CreateUserDto, tenantId: string): Promise<User> {
     const exists = await this.userRepository.findOne({
       where: { email: dto.email },
     });
@@ -29,7 +29,7 @@ export class UsersService {
     })) as string;
 
     const user = this.userRepository.create({
-      tenantId: dto.tenantId,
+      tenantId,
       name: dto.name,
       email: dto.email,
       role: dto.role,
@@ -38,20 +38,30 @@ export class UsersService {
     return await this.userRepository.save(user);
   }
 
-  async findAll(): Promise<User[]> {
-    return await this.userRepository.find();
+  async findAll(tenantId?: string): Promise<User[]> {
+    return await this.userRepository.find(
+      tenantId ? { where: { tenantId } } : {},
+    );
   }
 
-  async findOne(id: string): Promise<User> {
+  async findByEmail(email: string): Promise<User | null> {
+    return await this.userRepository.findOne({ where: { email } });
+  }
+
+  async findOne(id: string, tenantId?: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) {
+    if (!user || (tenantId && user.tenantId !== tenantId)) {
       throw new NotFoundException('User not found');
     }
     return user;
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<User> {
-    const user = await this.findOne(id);
+  async update(
+    id: string,
+    dto: UpdateUserDto,
+    tenantId?: string,
+  ): Promise<User> {
+    const user = await this.findOne(id, tenantId);
 
     if (dto.email && dto.email !== user.email) {
       const exists = await this.userRepository.findOne({
@@ -71,8 +81,8 @@ export class UsersService {
     return await this.userRepository.save(user);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(id: string, tenantId?: string): Promise<void> {
+    await this.findOne(id, tenantId);
     await this.userRepository.softDelete(id);
   }
 }

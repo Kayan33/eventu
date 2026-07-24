@@ -45,12 +45,38 @@ export class ClientsService {
     return await this.clientRepository.save(client);
   }
 
-  async findAll(): Promise<Client[]> {
-    return await this.clientRepository.find();
+  async findAllForTenant(tenantId: string): Promise<Client[]> {
+    return await this.clientRepository
+      .createQueryBuilder('client')
+      .innerJoin('client.tickets', 'ticket')
+      .innerJoin('ticket.ticketType', 'ticketType')
+      .innerJoin('ticketType.event', 'event')
+      .where('event.tenantId = :tenantId', { tenantId })
+      .distinct(true)
+      .getMany();
+  }
+
+  async findByEmail(email: string): Promise<Client | null> {
+    return await this.clientRepository.findOne({ where: { email } });
   }
 
   async findOne(id: string): Promise<Client> {
     const client = await this.clientRepository.findOne({ where: { id } });
+    if (!client) {
+      throw new NotFoundException('Client not found');
+    }
+    return client;
+  }
+
+  async findOneForTenant(id: string, tenantId: string): Promise<Client> {
+    const client = await this.clientRepository
+      .createQueryBuilder('client')
+      .innerJoin('client.tickets', 'ticket')
+      .innerJoin('ticket.ticketType', 'ticketType')
+      .innerJoin('ticketType.event', 'event')
+      .where('client.id = :id', { id })
+      .andWhere('event.tenantId = :tenantId', { tenantId })
+      .getOne();
     if (!client) {
       throw new NotFoundException('Client not found');
     }

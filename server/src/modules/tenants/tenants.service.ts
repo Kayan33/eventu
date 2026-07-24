@@ -29,26 +29,32 @@ export class TenantsService {
     return await this.tenantRepository.save(tenant);
   }
 
-  async findAll(): Promise<Tenant[]> {
-    return await this.tenantRepository.find();
+  async findAll(tenantId?: string): Promise<Tenant[]> {
+    return await this.tenantRepository.find(
+      tenantId ? { where: { id: tenantId } } : {},
+    );
   }
 
-  async findOne(id: string): Promise<Tenant> {
+  async findOne(id: string, tenantId?: string): Promise<Tenant> {
     const tenant = await this.tenantRepository.findOne({ where: { id } });
-    if (!tenant) {
+    if (!tenant || (tenantId && tenant.id !== tenantId)) {
       throw new NotFoundException('Tenant not found');
     }
     return tenant;
   }
 
-  async update(id: string, dto: UpdateTenantDto): Promise<Tenant> {
-    const tenant = await this.findOne(id);
+  async update(
+    id: string,
+    dto: UpdateTenantDto,
+    tenantId?: string,
+  ): Promise<Tenant> {
+    const tenant = await this.findOne(id, tenantId);
     Object.assign(tenant, dto);
     return await this.tenantRepository.save(tenant);
   }
 
-  async remove(id: string): Promise<void> {
-    const tenant = await this.findOne(id);
+  async remove(id: string, tenantId?: string): Promise<void> {
+    const tenant = await this.findOne(id, tenantId);
     await this.tenantRepository.remove(tenant);
   }
 }

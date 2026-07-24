@@ -5,17 +5,11 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUUID,
   MinLength,
 } from 'class-validator';
 import { UserRole } from '../../../common/enums/user-role.enum';
 
 export class CreateUserDto {
-  @ApiProperty({ example: 'b3f1c2a4-1234-4a5b-9c8d-1234567890ab' })
-  @IsUUID()
-  @IsNotEmpty()
-  tenantId!: string;
-
   @ApiProperty({ example: 'João da Silva' })
   @IsString()
   @IsNotEmpty()
