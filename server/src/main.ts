@@ -10,6 +10,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin: process.env.FRONTEND_URL?.split(',') ?? '*',
+    credentials: true,
   });
 
   app.useGlobalPipes(

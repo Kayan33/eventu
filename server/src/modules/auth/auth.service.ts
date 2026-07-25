@@ -20,6 +20,11 @@ import {
   ClientJwtPayload,
 } from './interfaces/jwt-payload.interface';
 
+export interface AuthResult<T> {
+  accessToken: string;
+  actor: T;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -29,7 +34,7 @@ export class AuthService {
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
-  async register(dto: RegisterDto): Promise<{ accessToken: string }> {
+  async register(dto: RegisterDto): Promise<AuthResult<UserJwtPayload>> {
     return await this.dataSource.transaction(async (manager) => {
       const slug = slugify(dto.tenantName);
 
@@ -64,38 +69,38 @@ export class AuthService {
       });
       await manager.save(user);
 
-      const payload: UserJwtPayload = {
+      const actor: UserJwtPayload = {
         sub: user.id,
         tenantId: tenant.id,
         role: user.role,
         type: 'user',
       };
-      return { accessToken: await this.jwtService.signAsync(payload) };
+      return { accessToken: await this.jwtService.signAsync(actor), actor };
     });
   }
 
-  async loginUser(dto: LoginDto): Promise<{ accessToken: string }> {
+  async loginUser(dto: LoginDto): Promise<AuthResult<UserJwtPayload>> {
     const user = await this.usersService.findByEmail(dto.email);
     if (!user || !(await verifyPassword(user.passwordHash, dto.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload: UserJwtPayload = {
+    const actor: UserJwtPayload = {
       sub: user.id,
       tenantId: user.tenantId,
       role: user.role,
       type: 'user',
     };
-    return { accessToken: await this.jwtService.signAsync(payload) };
+    return { accessToken: await this.jwtService.signAsync(actor), actor };
   }
 
-  async loginClient(dto: LoginDto): Promise<{ accessToken: string }> {
+  async loginClient(dto: LoginDto): Promise<AuthResult<ClientJwtPayload>> {
     const client = await this.clientsService.findByEmail(dto.email);
     if (!client || !(await verifyPassword(client.passwordHash, dto.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload: ClientJwtPayload = { sub: client.id, type: 'client' };
-    return { accessToken: await this.jwtService.signAsync(payload) };
+    const actor: ClientJwtPayload = { sub: client.id, type: 'client' };
+    return { accessToken: await this.jwtService.signAsync(actor), actor };
   }
 }
