@@ -42,6 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // The token lives in an httpOnly cookie, invisible to JS — the only way
+    // to know who's logged in on first load is to ask the backend.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshActor().finally(() => setLoading(false));
   }, [refreshActor]);
 
