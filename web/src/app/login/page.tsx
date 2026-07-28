@@ -10,6 +10,7 @@ import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
 import { translateApiError } from "@/lib/api/errorMessages";
+import { resolvePostAuthDestination } from "@/lib/api/events";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,8 +26,8 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login({ email, password });
-      router.push("/");
+      const actor = await login({ email, password });
+      router.push(await resolvePostAuthDestination(actor));
     } catch (err) {
       setError(translateApiError(err, "Não foi possível entrar."));
     } finally {
@@ -72,7 +73,7 @@ export default function LoginPage() {
 
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
-        <Button type="submit" loading={submitting} className="mt-2">
+        <Button type="submit" loading={submitting} className="mt-2 w-full">
           Entrar
         </Button>
       </form>

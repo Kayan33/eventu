@@ -12,7 +12,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          "flex h-10 w-full items-center justify-center rounded-md bg-accent-700 text-sm font-semibold text-white transition-opacity",
+          "flex h-10 items-center justify-center rounded-md bg-accent-700 px-4 text-sm font-semibold text-white transition-opacity",
           "hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60",
           className,
         )}

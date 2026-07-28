@@ -13,6 +13,7 @@ import { usePasswordStrength } from "@/lib/hooks/usePasswordStrength";
 import { slugify } from "@/lib/utils/slugify";
 import { useAuth } from "@/contexts/AuthContext";
 import { translateApiError } from "@/lib/api/errorMessages";
+import { resolvePostAuthDestination } from "@/lib/api/events";
 
 export default function CadastroPage() {
   const router = useRouter();
@@ -41,8 +42,8 @@ export default function CadastroPage() {
 
     setSubmitting(true);
     try {
-      await register({ tenantName: orgName, name, email, password });
-      router.push("/");
+      const actor = await register({ tenantName: orgName, name, email, password });
+      router.push(await resolvePostAuthDestination(actor));
     } catch (err) {
       setError(translateApiError(err, "Não foi possível criar sua conta."));
     } finally {
@@ -135,7 +136,7 @@ export default function CadastroPage() {
 
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
-        <Button type="submit" loading={submitting} className="mt-2">
+        <Button type="submit" loading={submitting} className="mt-2 w-full">
           Criar minha conta
         </Button>
       </form>

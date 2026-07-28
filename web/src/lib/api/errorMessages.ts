@@ -5,6 +5,8 @@ const KNOWN_MESSAGES: Record<string, string> = {
   "User already exists": "Já existe uma conta com esse email.",
   "An organization with this name already exists":
     "Já existe uma organização com esse nome. Tente outro nome.",
+  "Event with this title already exists":
+    "Já existe um evento com esse nome. Tente outro nome.",
 };
 
 export function translateApiError(err: unknown, fallback: string): string {

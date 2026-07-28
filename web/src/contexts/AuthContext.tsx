@@ -21,8 +21,8 @@ import type { JwtPayload } from "@/lib/types/auth";
 interface AuthContextValue {
   actor: JwtPayload | null;
   loading: boolean;
-  login: (payload: LoginPayload) => Promise<void>;
-  register: (payload: RegisterOrganizationPayload) => Promise<void>;
+  login: (payload: LoginPayload) => Promise<JwtPayload>;
+  register: (payload: RegisterOrganizationPayload) => Promise<JwtPayload>;
   logout: () => Promise<void>;
 }
 
@@ -51,11 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function login(payload: LoginPayload) {
     const { actor: current } = await loginStaff(payload);
     setActor(current);
+    return current;
   }
 
   async function register(payload: RegisterOrganizationPayload) {
     const { actor: current } = await registerOrganization(payload);
     setActor(current);
+    return current;
   }
 
   async function logout() {
