@@ -6,8 +6,8 @@ import * as argon2 from 'argon2';
  * the real signature in one place instead of casting at every call site.
  */
 export async function hashPassword(password: string): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  return argon2.hash(password, { type: argon2.argon2id });
+  const hash: unknown = await argon2.hash(password, { type: argon2.argon2id });
+  return hash as string;
 }
 
 export async function verifyPassword(

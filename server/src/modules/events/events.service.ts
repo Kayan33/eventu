@@ -56,7 +56,11 @@ export class EventsService {
     return event;
   }
 
-  async update( id: string, dto: UpdateEventDto, tenantId: string,): Promise<Event> {
+  async update(
+    id: string,
+    dto: UpdateEventDto,
+    tenantId: string,
+  ): Promise<Event> {
     const event = await this.findOne(id, tenantId);
 
     const { startDate, endDate, ...rest } = dto;
