@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
 } from '@nestjs/common';
@@ -81,5 +82,18 @@ export class EventsController {
     @CurrentActor() actor: UserJwtPayload,
   ) {
     return this.eventsService.remove(id, actor.tenantId);
+  }
+
+  @ActorType('user')
+  @Roles(UserRole.ADMIN, UserRole.EDITOR)
+  @Patch(':id/publish')
+  @ApiOperation({
+    summary: 'Publish a draft event (staff only, own tenant)',
+  })
+  publish(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentActor() actor: UserJwtPayload,
+  ) {
+    return this.eventsService.publish(id, actor.tenantId);
   }
 }

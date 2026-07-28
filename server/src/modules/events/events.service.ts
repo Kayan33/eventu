@@ -56,11 +56,7 @@ export class EventsService {
     return event;
   }
 
-  async update(
-    id: string,
-    dto: UpdateEventDto,
-    tenantId: string,
-  ): Promise<Event> {
+  async update( id: string, dto: UpdateEventDto, tenantId: string,): Promise<Event> {
     const event = await this.findOne(id, tenantId);
 
     const { startDate, endDate, ...rest } = dto;
@@ -78,5 +74,19 @@ export class EventsService {
       throw new BadRequestException('Only draft events can be deleted');
     }
     await this.eventRepository.remove(event);
+  }
+
+  async publish(id: string, tenantId: string): Promise<Event> {
+    const event = await this.findOne(id, tenantId);
+    if (event.status !== EventStatus.DRAFT) {
+      throw new BadRequestException('Only draft events can be published');
+    }
+    if (event.ticketTypes.length === 0) {
+      throw new BadRequestException(
+        'Event needs at least one ticket type to be published',
+      );
+    }
+    event.status = EventStatus.PUBLISHED;
+    return await this.eventRepository.save(event);
   }
 }
