@@ -40,9 +40,10 @@ export class EventsService {
   }
 
   async findAll(tenantId?: string): Promise<Event[]> {
-    return await this.eventRepository.find(
-      tenantId ? { where: { tenantId } } : {},
-    );
+    return await this.eventRepository.find({
+      ...(tenantId && { where: { tenantId } }),
+      relations: { ticketTypes: true },
+    });
   }
 
   async findOne(id: string, tenantId?: string): Promise<Event> {
