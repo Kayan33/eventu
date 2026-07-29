@@ -14,6 +14,10 @@ export function listEvents(): Promise<EventEntity[]> {
   return apiFetch<EventEntity[]>("/events");
 }
 
+export function getEvent(id: string): Promise<EventEntity> {
+  return apiFetch<EventEntity>(`/events/${id}`);
+}
+
 export function createEvent(payload: EventPayload): Promise<EventEntity> {
   return apiFetch<EventEntity>("/events", { method: "POST", body: payload });
 }

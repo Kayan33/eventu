@@ -1,3 +1,5 @@
+import type { TicketType } from "@/lib/types/ticketType";
+
 export type EventStatus = "draft" | "published" | "ongoing" | "finished" | "cancelled";
 
 export interface EventEntity {
@@ -12,4 +14,5 @@ export interface EventEntity {
   status: EventStatus;
   createdAt: string;
   updatedAt: string;
+  ticketTypes?: TicketType[];
 }

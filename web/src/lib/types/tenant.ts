@@ -13,3 +13,10 @@ export interface UpdateTenantPixPayload {
   pixKeyType: PixKeyType;
   pixBeneficiary: string;
 }
+
+export interface UpdateTenantPayload {
+  name: string;
+  pixKey: string;
+  pixKeyType: PixKeyType;
+  pixBeneficiary: string;
+}

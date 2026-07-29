@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
-import { Toggle } from "@/components/wizard/Toggle";
+import { Toggle } from "@/components/ui/Toggle";
 import type { useEventWizard } from "@/lib/hooks/useEventWizard";
 
 type Wizard = ReturnType<typeof useEventWizard>;

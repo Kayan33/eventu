@@ -1,6 +1,6 @@
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
-import { SegmentedControl } from "@/components/wizard/SegmentedControl";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import type { useEventWizard } from "@/lib/hooks/useEventWizard";
 import type { PixKeyType } from "@/lib/types/tenant";
 

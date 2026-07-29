@@ -14,6 +14,10 @@ export interface UpdateTicketTypePayload {
   quantity: number;
 }
 
+export function listTicketTypes(eventId: string): Promise<TicketType[]> {
+  return apiFetch<TicketType[]>(`/ticket-types?eventId=${eventId}`);
+}
+
 export function createTicketType(payload: CreateTicketTypePayload): Promise<TicketType> {
   return apiFetch<TicketType>("/ticket-types", { method: "POST", body: payload });
 }

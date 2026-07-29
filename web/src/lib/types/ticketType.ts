@@ -2,6 +2,7 @@ export interface TicketType {
   id: string;
   eventId: string;
   name: string;
-  basePrice: number;
+  basePrice: string;
   quantity: number;
+  sold: number;
 }
