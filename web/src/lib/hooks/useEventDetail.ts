@@ -6,9 +6,16 @@ import {
   listTicketTypes,
   updateTicketType,
 } from "@/lib/api/ticketTypes";
+import {
+  createFormField,
+  deleteFormField,
+  listFormFields,
+  updateFormField,
+} from "@/lib/api/formFields";
 import { translateApiError } from "@/lib/api/errorMessages";
 import type { EventEntity } from "@/lib/types/event";
 import type { TicketType } from "@/lib/types/ticketType";
+import { FormFieldType, type EventFormField } from "@/lib/types/formField";
 
 type LocationType = "presencial" | "online";
 
@@ -19,6 +26,18 @@ interface TicketRow {
   price: string;
   quantity: string;
   sold: number;
+  saving: boolean;
+  dirty: boolean;
+}
+
+export interface FormFieldRow {
+  localId: string;
+  remoteId?: string;
+  label: string;
+  type: FormFieldType;
+  optionsText: string;
+  isRequired: boolean;
+  displayOrder: number;
   saving: boolean;
   dirty: boolean;
 }
@@ -51,12 +70,38 @@ function ticketRowFromServer(t: TicketType): TicketRow {
   };
 }
 
+function parseOptions(text: string): string[] {
+  return text
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function optionsToText(options?: string[]): string {
+  return (options ?? []).join(", ");
+}
+
+function formFieldRowFromServer(f: EventFormField): FormFieldRow {
+  return {
+    localId: f.id,
+    remoteId: f.id,
+    label: f.label,
+    type: f.type,
+    optionsText: optionsToText(f.options),
+    isRequired: f.isRequired,
+    displayOrder: f.displayOrder,
+    saving: false,
+    dirty: false,
+  };
+}
+
 export function useEventDetail(eventId: string) {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [event, setEvent] = useState<EventEntity | null>(null);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
+  const [formFields, setFormFields] = useState<FormFieldRow[]>([]);
 
   const [overview, setOverview] = useState({
     title: "",
@@ -77,9 +122,14 @@ export function useEventDetail(eventId: string) {
     setLoading(true);
     setNotFound(false);
     try {
-      const [ev, ticketTypes] = await Promise.all([getEvent(eventId), listTicketTypes(eventId)]);
+      const [ev, ticketTypes, fields] = await Promise.all([
+        getEvent(eventId),
+        listTicketTypes(eventId),
+        listFormFields(eventId),
+      ]);
       setEvent(ev);
       setTickets(ticketTypes.map(ticketRowFromServer));
+      setFormFields(fields.map(formFieldRowFromServer));
 
       const start = new Date(ev.startDate);
       const end = new Date(ev.endDate);
@@ -195,6 +245,98 @@ export function useEventDetail(eventId: string) {
     setTickets((rows) => rows.filter((r) => r.localId !== localId));
   }
 
+  function addFormFieldRow() {
+    setFormFields((rows) => [
+      ...rows,
+      {
+        localId: crypto.randomUUID(),
+        label: "",
+        type: FormFieldType.TEXT,
+        optionsText: "",
+        isRequired: false,
+        displayOrder: rows.length,
+        saving: false,
+        dirty: true,
+      },
+    ]);
+  }
+
+  function updateFormFieldRow(localId: string, patch: Partial<FormFieldRow>) {
+    setFormFields((rows) =>
+      rows.map((r) => (r.localId === localId ? { ...r, ...patch, dirty: true } : r)),
+    );
+  }
+
+  async function saveFormFieldRow(localId: string) {
+    const row = formFields.find((r) => r.localId === localId);
+    if (!row || !row.label.trim()) return;
+    if (row.type === FormFieldType.SELECT && parseOptions(row.optionsText).length === 0) return;
+
+    setFormFields((rows) => rows.map((r) => (r.localId === localId ? { ...r, saving: true } : r)));
+    setError(null);
+    try {
+      const payload = {
+        label: row.label,
+        type: row.type,
+        options: row.type === FormFieldType.SELECT ? parseOptions(row.optionsText) : undefined,
+        isRequired: row.isRequired,
+        displayOrder: row.displayOrder,
+      };
+      const saved = row.remoteId
+        ? await updateFormField(row.remoteId, payload)
+        : await createFormField({ eventId, ...payload });
+      setFormFields((rows) =>
+        rows.map((r) => (r.localId === localId ? formFieldRowFromServer(saved) : r)),
+      );
+    } catch (err) {
+      setError(translateApiError(err, "Não foi possível salvar o campo do formulário."));
+      setFormFields((rows) => rows.map((r) => (r.localId === localId ? { ...r, saving: false } : r)));
+    }
+  }
+
+  async function removeFormFieldRow(localId: string) {
+    const row = formFields.find((r) => r.localId === localId);
+    if (!row) return;
+    if (row.remoteId) {
+      setError(null);
+      try {
+        await deleteFormField(row.remoteId);
+      } catch (err) {
+        setError(translateApiError(err, "Não foi possível remover o campo do formulário."));
+        return;
+      }
+    }
+    setFormFields((rows) => rows.filter((r) => r.localId !== localId));
+  }
+
+  async function persistFormFieldOrder(rows: FormFieldRow[]) {
+    setError(null);
+    try {
+      await Promise.all(
+        rows
+          .filter((r) => r.remoteId)
+          .map((r) => updateFormField(r.remoteId as string, { displayOrder: r.displayOrder })),
+      );
+    } catch (err) {
+      setError(translateApiError(err, "Não foi possível reordenar os campos do formulário."));
+    }
+  }
+
+  function reorderFormFieldRows(activeLocalId: string, overLocalId: string) {
+    setFormFields((rows) => {
+      const oldIndex = rows.findIndex((r) => r.localId === activeLocalId);
+      const newIndex = rows.findIndex((r) => r.localId === overLocalId);
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return rows;
+
+      const reordered = [...rows];
+      const [moved] = reordered.splice(oldIndex, 1);
+      reordered.splice(newIndex, 0, moved);
+      const withOrder = reordered.map((r, i) => ({ ...r, displayOrder: i }));
+      void persistFormFieldOrder(withOrder);
+      return withOrder;
+    });
+  }
+
   return {
     loading,
     notFound,
@@ -212,5 +354,11 @@ export function useEventDetail(eventId: string) {
     updateTicketRow,
     saveTicketRow,
     removeTicketRow,
+    formFields,
+    addFormFieldRow,
+    updateFormFieldRow,
+    saveFormFieldRow,
+    removeFormFieldRow,
+    reorderFormFieldRows,
   };
 }

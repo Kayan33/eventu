@@ -13,8 +13,9 @@ import { Button } from "@/components/ui/Button";
 import { formatDateRange } from "@/lib/utils/formatDate";
 import { OverviewTab } from "./_components/OverviewTab";
 import { TicketsTab } from "./_components/TicketsTab";
+import { FormFieldsTab } from "./_components/FormFieldsTab";
 
-type TabValue = "overview" | "tickets";
+type TabValue = "overview" | "tickets" | "form";
 
 export default function EventDetailPage() {
   const { ready } = useRequireUser();
@@ -88,11 +89,13 @@ export default function EventDetailPage() {
           items={[
             { value: "overview", label: "Visão geral" },
             { value: "tickets", label: "Ingressos" },
+            { value: "form", label: "Formulário" },
           ]}
         />
 
         {tab === "overview" ? <OverviewTab detail={detail} /> : null}
         {tab === "tickets" ? <TicketsTab detail={detail} /> : null}
+        {tab === "form" ? <FormFieldsTab detail={detail} /> : null}
       </div>
     </PanelLayout>
   );
