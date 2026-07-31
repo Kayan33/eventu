@@ -32,6 +32,9 @@ export class TicketType {
   @Column({ type: 'int', default: 0 })
   sold!: number;
 
+  @Column({ default: 0 })
+  displayOrder!: number;
+
   @CreateDateColumn()
   createdAt!: Date;
 

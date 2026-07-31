@@ -45,13 +45,17 @@ export class TicketTypesService {
       name: dto.name,
       basePrice: dto.basePrice.toFixed(2),
       quantity: dto.quantity,
+      displayOrder: dto.displayOrder,
     });
     return await this.ticketTypeRepository.save(ticketType);
   }
 
   async findByEvent(eventId: string, tenantId?: string): Promise<TicketType[]> {
     await this.assertEventBelongsToTenant(eventId, tenantId);
-    return await this.ticketTypeRepository.find({ where: { eventId } });
+    return await this.ticketTypeRepository.find({
+      where: { eventId },
+      order: { displayOrder: 'ASC' },
+    });
   }
 
   async findOne(id: string, tenantId?: string): Promise<TicketType> {
