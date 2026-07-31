@@ -12,20 +12,27 @@ import {
   listFormFields,
   updateFormField,
 } from "@/lib/api/formFields";
+import {
+  createPricingRule,
+  deletePricingRule,
+  listPricingRules,
+} from "@/lib/api/pricingRules";
 import { translateApiError } from "@/lib/api/errorMessages";
 import type { EventEntity } from "@/lib/types/event";
 import type { TicketType } from "@/lib/types/ticketType";
 import { FormFieldType, type EventFormField } from "@/lib/types/formField";
+import type { PricingRule } from "@/lib/types/pricingRule";
 
 type LocationType = "presencial" | "online";
 
-interface TicketRow {
+export interface TicketRow {
   localId: string;
   remoteId?: string;
   name: string;
   price: string;
   quantity: string;
   sold: number;
+  displayOrder: number;
   saving: boolean;
   dirty: boolean;
 }
@@ -65,6 +72,7 @@ function ticketRowFromServer(t: TicketType): TicketRow {
     price: t.basePrice,
     quantity: String(t.quantity),
     sold: t.sold,
+    displayOrder: t.displayOrder,
     saving: false,
     dirty: false,
   };
@@ -102,6 +110,8 @@ export function useEventDetail(eventId: string) {
   const [event, setEvent] = useState<EventEntity | null>(null);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [formFields, setFormFields] = useState<FormFieldRow[]>([]);
+  const [pricingRules, setPricingRules] = useState<Record<string, PricingRule[]>>({});
+  const [pricingRulesLoading, setPricingRulesLoading] = useState<Record<string, boolean>>({});
 
   const [overview, setOverview] = useState({
     title: "",
@@ -198,7 +208,16 @@ export function useEventDetail(eventId: string) {
   function addTicketRow() {
     setTickets((rows) => [
       ...rows,
-      { localId: crypto.randomUUID(), name: "", price: "", quantity: "", sold: 0, saving: false, dirty: true },
+      {
+        localId: crypto.randomUUID(),
+        name: "",
+        price: "",
+        quantity: "",
+        sold: 0,
+        displayOrder: rows.length,
+        saving: false,
+        dirty: true,
+      },
     ]);
   }
 
@@ -219,6 +238,7 @@ export function useEventDetail(eventId: string) {
         name: row.name,
         basePrice: Number(row.price) || 0,
         quantity: Number(row.quantity),
+        displayOrder: row.displayOrder,
       };
       const saved = row.remoteId
         ? await updateTicketType(row.remoteId, payload)
@@ -243,6 +263,34 @@ export function useEventDetail(eventId: string) {
       }
     }
     setTickets((rows) => rows.filter((r) => r.localId !== localId));
+  }
+
+  async function persistTicketOrder(rows: TicketRow[]) {
+    setError(null);
+    try {
+      await Promise.all(
+        rows
+          .filter((r) => r.remoteId)
+          .map((r) => updateTicketType(r.remoteId as string, { displayOrder: r.displayOrder })),
+      );
+    } catch (err) {
+      setError(translateApiError(err, "Não foi possível reordenar os tipos de ingresso."));
+    }
+  }
+
+  function reorderTicketRows(activeLocalId: string, overLocalId: string) {
+    setTickets((rows) => {
+      const oldIndex = rows.findIndex((r) => r.localId === activeLocalId);
+      const newIndex = rows.findIndex((r) => r.localId === overLocalId);
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return rows;
+
+      const reordered = [...rows];
+      const [moved] = reordered.splice(oldIndex, 1);
+      reordered.splice(newIndex, 0, moved);
+      const withOrder = reordered.map((r, i) => ({ ...r, displayOrder: i }));
+      void persistTicketOrder(withOrder);
+      return withOrder;
+    });
   }
 
   function addFormFieldRow() {
@@ -337,6 +385,47 @@ export function useEventDetail(eventId: string) {
     });
   }
 
+  async function loadPricingRules(ticketTypeId: string) {
+    if (pricingRules[ticketTypeId] || pricingRulesLoading[ticketTypeId]) return;
+    setPricingRulesLoading((s) => ({ ...s, [ticketTypeId]: true }));
+    try {
+      const rules = await listPricingRules(ticketTypeId);
+      setPricingRules((s) => ({ ...s, [ticketTypeId]: rules }));
+    } catch (err) {
+      setError(translateApiError(err, "Não foi possível carregar as regras de preço."));
+    } finally {
+      setPricingRulesLoading((s) => ({ ...s, [ticketTypeId]: false }));
+    }
+  }
+
+  async function addPricingRule(
+    ticketTypeId: string,
+    formFieldId: string,
+    fieldValue: string,
+    price: number,
+  ) {
+    setError(null);
+    try {
+      const rule = await createPricingRule({ ticketTypeId, formFieldId, fieldValue, price });
+      setPricingRules((s) => ({ ...s, [ticketTypeId]: [...(s[ticketTypeId] ?? []), rule] }));
+    } catch (err) {
+      setError(translateApiError(err, "Não foi possível criar a regra de preço."));
+    }
+  }
+
+  async function removePricingRule(ticketTypeId: string, ruleId: string) {
+    setError(null);
+    try {
+      await deletePricingRule(ruleId);
+      setPricingRules((s) => ({
+        ...s,
+        [ticketTypeId]: (s[ticketTypeId] ?? []).filter((r) => r.id !== ruleId),
+      }));
+    } catch (err) {
+      setError(translateApiError(err, "Não foi possível remover a regra de preço."));
+    }
+  }
+
   return {
     loading,
     notFound,
@@ -354,11 +443,17 @@ export function useEventDetail(eventId: string) {
     updateTicketRow,
     saveTicketRow,
     removeTicketRow,
+    reorderTicketRows,
     formFields,
     addFormFieldRow,
     updateFormFieldRow,
     saveFormFieldRow,
     removeFormFieldRow,
     reorderFormFieldRows,
+    pricingRules,
+    pricingRulesLoading,
+    loadPricingRules,
+    addPricingRule,
+    removePricingRule,
   };
 }

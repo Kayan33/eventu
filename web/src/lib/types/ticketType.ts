@@ -5,4 +5,5 @@ export interface TicketType {
   basePrice: string;
   quantity: number;
   sold: number;
+  displayOrder: number;
 }

@@ -6,12 +6,14 @@ export interface CreateTicketTypePayload {
   name: string;
   basePrice: number;
   quantity: number;
+  displayOrder?: number;
 }
 
 export interface UpdateTicketTypePayload {
-  name: string;
-  basePrice: number;
-  quantity: number;
+  name?: string;
+  basePrice?: number;
+  quantity?: number;
+  displayOrder?: number;
 }
 
 export function listTicketTypes(eventId: string): Promise<TicketType[]> {
