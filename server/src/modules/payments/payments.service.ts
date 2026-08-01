@@ -35,7 +35,11 @@ export class PaymentsService {
   ): Promise<Payment[]> {
     const qb = this.paymentRepository
       .createQueryBuilder('payment')
-      .innerJoin('payment.ticket', 'ticket');
+      .leftJoinAndSelect('payment.ticket', 'ticket')
+      .leftJoinAndSelect('ticket.client', 'client')
+      .leftJoinAndSelect('ticket.ticketType', 'ticketType')
+      .leftJoinAndSelect('ticketType.event', 'event')
+      .orderBy('payment.createdAt', 'DESC');
 
     if (status) {
       qb.andWhere('payment.status = :status', { status });
@@ -44,9 +48,7 @@ export class PaymentsService {
       qb.andWhere('ticket.clientId = :clientId', { clientId: scope.clientId });
     }
     if (scope.tenantId) {
-      qb.innerJoin('ticket.ticketType', 'ticketType')
-        .innerJoin('ticketType.event', 'event')
-        .andWhere('event.tenantId = :tenantId', { tenantId: scope.tenantId });
+      qb.andWhere('event.tenantId = :tenantId', { tenantId: scope.tenantId });
     }
 
     return await qb.getMany();
@@ -55,7 +57,7 @@ export class PaymentsService {
   async findOne(id: string, scope: PaymentScope = {}): Promise<Payment> {
     const payment = await this.paymentRepository.findOne({
       where: { id },
-      relations: { ticket: { ticketType: { event: true } } },
+      relations: { ticket: { client: true, ticketType: { event: true } } },
     });
     if (!payment) {
       throw new NotFoundException('Payment not found');
