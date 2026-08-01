@@ -5,7 +5,7 @@ export interface CreateTicketTypePayload {
   eventId: string;
   name: string;
   basePrice: number;
-  quantity: number;
+  quantity?: number;
   displayOrder?: number;
 }
 

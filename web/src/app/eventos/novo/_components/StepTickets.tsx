@@ -2,12 +2,14 @@ import { X } from "lucide-react";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Toggle } from "@/components/ui/Toggle";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import type { useEventWizard } from "@/lib/hooks/useEventWizard";
 
 type Wizard = ReturnType<typeof useEventWizard>;
 
 export function StepTickets({ wizard }: { wizard: Wizard }) {
   const { state, update, addTicket, updateTicket, removeTicket } = wizard;
+  const isTotal = state.capacityMode === "total";
 
   return (
     <div className="flex flex-col gap-4">
@@ -25,11 +27,41 @@ export function StepTickets({ wizard }: { wizard: Wizard }) {
         description="Ative para pular a etapa de recebimento via Pix"
       />
 
+      <Field label="Limite de vagas" htmlFor="capacityMode">
+        <SegmentedControl
+          value={state.capacityMode}
+          onChange={(capacityMode) => update({ capacityMode })}
+          options={[
+            { value: "per_ticket_type", label: "Por tipo de ingresso" },
+            { value: "total", label: "Total do evento" },
+          ]}
+        />
+      </Field>
+
+      {isTotal ? (
+        <Field
+          label="Vagas totais do evento"
+          htmlFor="totalCapacity"
+          hint="Compartilhado entre todos os tipos de ingresso abaixo"
+        >
+          <Input
+            id="totalCapacity"
+            type="number"
+            min={1}
+            placeholder="200"
+            value={state.totalCapacity}
+            onChange={(e) => update({ totalCapacity: e.target.value })}
+          />
+        </Field>
+      ) : null}
+
       <div className="flex flex-col gap-3">
         {state.tickets.map((ticket) => (
           <div
             key={ticket.localId}
-            className="grid grid-cols-[1.4fr_1fr_1fr_auto] items-end gap-2.5 rounded-md border border-divider bg-surface p-3.5"
+            className={`grid items-end gap-2.5 rounded-md border border-divider bg-surface p-3.5 ${
+              isTotal ? "grid-cols-[1.4fr_1fr_auto]" : "grid-cols-[1.4fr_1fr_1fr_auto]"
+            }`}
           >
             <div className="min-w-0">
               <Field label="Nome" htmlFor={`ticket-name-${ticket.localId}`}>
@@ -61,18 +93,20 @@ export function StepTickets({ wizard }: { wizard: Wizard }) {
               )}
             </div>
 
-            <div className="min-w-0">
-              <Field label="Vagas" htmlFor={`ticket-qty-${ticket.localId}`}>
-                <Input
-                  id={`ticket-qty-${ticket.localId}`}
-                  type="number"
-                  min={1}
-                  placeholder="100"
-                  value={ticket.quantity}
-                  onChange={(e) => updateTicket(ticket.localId, { quantity: e.target.value })}
-                />
-              </Field>
-            </div>
+            {isTotal ? null : (
+              <div className="min-w-0">
+                <Field label="Vagas" htmlFor={`ticket-qty-${ticket.localId}`}>
+                  <Input
+                    id={`ticket-qty-${ticket.localId}`}
+                    type="number"
+                    min={1}
+                    placeholder="100"
+                    value={ticket.quantity}
+                    onChange={(e) => updateTicket(ticket.localId, { quantity: e.target.value })}
+                  />
+                </Field>
+              </div>
+            )}
 
             <button
               type="button"

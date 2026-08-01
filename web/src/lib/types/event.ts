@@ -1,6 +1,7 @@
 import type { TicketType } from "@/lib/types/ticketType";
 
 export type EventStatus = "draft" | "published" | "ongoing" | "finished" | "cancelled";
+export type CapacityMode = "per_ticket_type" | "total";
 
 export interface EventEntity {
   id: string;
@@ -12,6 +13,8 @@ export interface EventEntity {
   endDate: string;
   location?: string;
   status: EventStatus;
+  capacityMode: CapacityMode;
+  totalCapacity?: number;
   createdAt: string;
   updatedAt: string;
   ticketTypes?: TicketType[];

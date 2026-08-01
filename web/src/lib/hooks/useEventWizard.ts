@@ -9,6 +9,7 @@ import {
 import { updateTenantPix } from "@/lib/api/tenants";
 import { translateApiError } from "@/lib/api/errorMessages";
 import type { PixKeyType } from "@/lib/types/tenant";
+import type { CapacityMode } from "@/lib/types/event";
 
 type Step = 1 | 2 | 3;
 type LocationType = "presencial" | "online";
@@ -40,6 +41,8 @@ interface WizardState {
   description: string;
 
   isFree: boolean;
+  capacityMode: CapacityMode;
+  totalCapacity: string;
   tickets: TicketRow[];
 
   pixKeyType: PixKeyType;
@@ -76,6 +79,8 @@ function initialState(): WizardState {
     description: "",
 
     isFree: false,
+    capacityMode: "per_ticket_type",
+    totalCapacity: "",
     tickets: [{ localId: crypto.randomUUID(), name: "Inteira", price: "", quantity: "" }],
 
     pixKeyType: "cpf",
@@ -130,15 +135,15 @@ export function useEventWizard() {
       );
     }
     if (state.step === 2) {
-      return (
+      const ticketsValid =
         state.tickets.length > 0 &&
         state.tickets.every(
-          (t) =>
-            t.name.trim().length > 0 &&
-            Number(t.quantity) > 0 &&
-            (state.isFree || Number(t.price) >= 0),
-        )
-      );
+          (t) => t.name.trim().length > 0 && (state.isFree || Number(t.price) >= 0),
+        );
+      if (state.capacityMode === "total") {
+        return ticketsValid && Number(state.totalCapacity) > 0;
+      }
+      return ticketsValid && state.tickets.every((t) => Number(t.quantity) > 0);
     }
     return Boolean(state.pixKey.trim() && state.pixBeneficiary.trim());
   }
@@ -150,6 +155,9 @@ export function useEventWizard() {
       startDate: new Date(`${state.startDate}T${state.startTime}`).toISOString(),
       endDate: new Date(`${state.endDate}T${state.endTime}`).toISOString(),
       location: state.locationType === "presencial" ? state.address : state.onlineLink,
+      capacityMode: state.capacityMode,
+      totalCapacity:
+        state.capacityMode === "total" ? Number(state.totalCapacity) || undefined : undefined,
     };
 
     if (state.eventId) {
@@ -167,7 +175,9 @@ export function useEventWizard() {
       const payload = {
         name: ticket.name,
         basePrice: state.isFree ? 0 : Number(ticket.price),
-        quantity: Number(ticket.quantity),
+        ...(state.capacityMode === "per_ticket_type" && {
+          quantity: Number(ticket.quantity),
+        }),
       };
       if (ticket.remoteId) {
         await updateTicketType(ticket.remoteId, payload);
@@ -192,8 +202,8 @@ export function useEventWizard() {
       }
 
       if (state.step === 2) {
-        const eventId = state.eventId;
-        if (!eventId) throw new Error("Event not created yet");
+        if (!state.eventId) throw new Error("Event not created yet");
+        const eventId = await ensureEvent();
         await syncTicketTypes(eventId);
         if (state.isFree) {
           setState((s) => ({ ...s, done: true, submitting: false }));

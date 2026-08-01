@@ -18,20 +18,28 @@ import type { TicketRow, useEventDetail } from "@/lib/hooks/useEventDetail";
 type Detail = ReturnType<typeof useEventDetail>;
 
 export function TicketsTab({ detail }: { detail: Detail }) {
-  const { tickets, addTicketRow, reorderTicketRows } = detail;
+  const { tickets, addTicketRow, reorderTicketRows, event } = detail;
+  const isTotal = event?.capacityMode === "total";
+  const totalSold = tickets.reduce((sum, t) => sum + t.sold, 0);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
+  function handleDragEnd(dragEvent: DragEndEvent) {
+    const { active, over } = dragEvent;
     if (!over || active.id === over.id) return;
     reorderTicketRows(String(active.id), String(over.id));
   }
 
   return (
     <div>
+      {isTotal ? (
+        <div className="mb-4 rounded-md border border-divider bg-surface p-3.5 text-sm text-ink">
+          Vagas do evento: <strong>{totalSold}</strong> / {event?.totalCapacity ?? 0}
+        </div>
+      ) : null}
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext
           items={tickets.map((t) => t.localId)}
@@ -58,6 +66,7 @@ export function TicketsTab({ detail }: { detail: Detail }) {
 
 function TicketRowCard({ ticket, detail }: { ticket: TicketRow; detail: Detail }) {
   const { updateTicketRow, saveTicketRow, removeTicketRow } = detail;
+  const isTotal = detail.event?.capacityMode === "total";
   const [expanded, setExpanded] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -96,7 +105,11 @@ function TicketRowCard({ ticket, detail }: { ticket: TicketRow; detail: Detail }
             <div className="mb-2 text-[11px] text-ink-soft">{ticket.sold} vendidas</div>
           ) : null}
 
-          <div className="grid grid-cols-[1.4fr_1fr_1fr_auto] items-end gap-2.5">
+          <div
+            className={`grid items-end gap-2.5 ${
+              isTotal ? "grid-cols-[1.4fr_1fr_auto]" : "grid-cols-[1.4fr_1fr_1fr_auto]"
+            }`}
+          >
             <div className="min-w-0">
               <Field label="Nome" htmlFor={`t-name-${ticket.localId}`}>
                 <Input
@@ -117,17 +130,19 @@ function TicketRowCard({ ticket, detail }: { ticket: TicketRow; detail: Detail }
                 />
               </Field>
             </div>
-            <div className="min-w-0">
-              <Field label="Vagas" htmlFor={`t-qty-${ticket.localId}`}>
-                <Input
-                  id={`t-qty-${ticket.localId}`}
-                  type="number"
-                  min={1}
-                  value={ticket.quantity}
-                  onChange={(e) => updateTicketRow(ticket.localId, { quantity: e.target.value })}
-                />
-              </Field>
-            </div>
+            {isTotal ? null : (
+              <div className="min-w-0">
+                <Field label="Vagas" htmlFor={`t-qty-${ticket.localId}`}>
+                  <Input
+                    id={`t-qty-${ticket.localId}`}
+                    type="number"
+                    min={1}
+                    value={ticket.quantity}
+                    onChange={(e) => updateTicketRow(ticket.localId, { quantity: e.target.value })}
+                  />
+                </Field>
+              </div>
+            )}
 
             <button
               type="button"

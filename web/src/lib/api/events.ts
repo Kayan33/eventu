@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { EventEntity } from "@/lib/types/event";
+import type { CapacityMode, EventEntity } from "@/lib/types/event";
 import type { JwtPayload } from "@/lib/types/auth";
 
 export interface EventPayload {
@@ -8,6 +8,8 @@ export interface EventPayload {
   startDate: string;
   endDate: string;
   location?: string;
+  capacityMode?: CapacityMode;
+  totalCapacity?: number;
 }
 
 export function listEvents(): Promise<EventEntity[]> {

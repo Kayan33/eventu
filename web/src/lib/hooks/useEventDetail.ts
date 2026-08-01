@@ -18,7 +18,7 @@ import {
   listPricingRules,
 } from "@/lib/api/pricingRules";
 import { translateApiError } from "@/lib/api/errorMessages";
-import type { EventEntity } from "@/lib/types/event";
+import type { CapacityMode, EventEntity } from "@/lib/types/event";
 import type { TicketType } from "@/lib/types/ticketType";
 import { FormFieldType, type EventFormField } from "@/lib/types/formField";
 import type { PricingRule } from "@/lib/types/pricingRule";
@@ -70,7 +70,7 @@ function ticketRowFromServer(t: TicketType): TicketRow {
     remoteId: t.id,
     name: t.name,
     price: t.basePrice,
-    quantity: String(t.quantity),
+    quantity: t.quantity !== undefined ? String(t.quantity) : "",
     sold: t.sold,
     displayOrder: t.displayOrder,
     saving: false,
@@ -123,6 +123,8 @@ export function useEventDetail(eventId: string) {
     address: "",
     onlineLink: "",
     description: "",
+    capacityMode: "per_ticket_type" as CapacityMode,
+    totalCapacity: "",
   });
   const [overviewSaving, setOverviewSaving] = useState(false);
   const [overviewSaved, setOverviewSaved] = useState(false);
@@ -153,6 +155,8 @@ export function useEventDetail(eventId: string) {
         address: ev.location ?? "",
         onlineLink: "",
         description: ev.description ?? "",
+        capacityMode: ev.capacityMode,
+        totalCapacity: ev.totalCapacity !== undefined ? String(ev.totalCapacity) : "",
       });
     } catch {
       setNotFound(true);
@@ -180,6 +184,11 @@ export function useEventDetail(eventId: string) {
         startDate: new Date(`${overview.startDate}T${overview.startTime}`).toISOString(),
         endDate: new Date(`${overview.endDate}T${overview.endTime}`).toISOString(),
         location: overview.locationType === "presencial" ? overview.address : overview.onlineLink,
+        capacityMode: overview.capacityMode,
+        totalCapacity:
+          overview.capacityMode === "total"
+            ? Number(overview.totalCapacity) || undefined
+            : undefined,
       };
       const updated = await updateEvent(eventId, payload);
       setEvent(updated);
@@ -229,7 +238,8 @@ export function useEventDetail(eventId: string) {
 
   async function saveTicketRow(localId: string) {
     const row = tickets.find((r) => r.localId === localId);
-    if (!row || !row.name.trim() || Number(row.quantity) <= 0) return;
+    const isTotal = event?.capacityMode === "total";
+    if (!row || !row.name.trim() || (!isTotal && Number(row.quantity) <= 0)) return;
 
     setTickets((rows) => rows.map((r) => (r.localId === localId ? { ...r, saving: true } : r)));
     setError(null);
@@ -237,7 +247,7 @@ export function useEventDetail(eventId: string) {
       const payload = {
         name: row.name,
         basePrice: Number(row.price) || 0,
-        quantity: Number(row.quantity),
+        ...(!isTotal && { quantity: Number(row.quantity) }),
         displayOrder: row.displayOrder,
       };
       const saved = row.remoteId

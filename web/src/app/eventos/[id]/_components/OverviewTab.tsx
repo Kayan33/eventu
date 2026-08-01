@@ -8,6 +8,7 @@ type Detail = ReturnType<typeof useEventDetail>;
 
 export function OverviewTab({ detail }: { detail: Detail }) {
   const { overview, updateOverview, overviewSaving, overviewSaved, saveOverview } = detail;
+  const isTotal = overview.capacityMode === "total";
 
   return (
     <div className="rounded-md border border-divider bg-surface p-6">
@@ -101,6 +102,37 @@ export function OverviewTab({ detail }: { detail: Detail }) {
           />
         </Field>
       </div>
+
+      <div className="mt-4">
+        <Field label="Limite de vagas" htmlFor="ovCapacityMode">
+          <SegmentedControl
+            value={overview.capacityMode}
+            onChange={(capacityMode) => updateOverview({ capacityMode })}
+            options={[
+              { value: "per_ticket_type", label: "Por tipo de ingresso" },
+              { value: "total", label: "Total do evento" },
+            ]}
+          />
+        </Field>
+      </div>
+
+      {isTotal ? (
+        <div className="mt-4">
+          <Field
+            label="Vagas totais do evento"
+            htmlFor="ovTotalCapacity"
+            hint="Compartilhado entre todos os tipos de ingresso"
+          >
+            <Input
+              id="ovTotalCapacity"
+              type="number"
+              min={1}
+              value={overview.totalCapacity}
+              onChange={(e) => updateOverview({ totalCapacity: e.target.value })}
+            />
+          </Field>
+        </div>
+      ) : null}
 
       <Button
         type="button"

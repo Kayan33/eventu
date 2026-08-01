@@ -15,7 +15,10 @@ export function EventCard({ event, onPublish, publishing }: EventCardProps) {
   const showSales = event.status === "published" || event.status === "ongoing";
 
   const sold = event.ticketTypes?.reduce((sum, t) => sum + t.sold, 0) ?? 0;
-  const total = event.ticketTypes?.reduce((sum, t) => sum + t.quantity, 0) ?? 0;
+  const total =
+    event.capacityMode === "total"
+      ? (event.totalCapacity ?? 0)
+      : (event.ticketTypes?.reduce((sum, t) => sum + (t.quantity ?? 0), 0) ?? 0);
   const soldPct = total > 0 ? Math.round((sold / total) * 100) : 0;
 
   return (
