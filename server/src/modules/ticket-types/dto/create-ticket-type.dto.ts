@@ -25,10 +25,15 @@ export class CreateTicketTypeDto {
   @Min(0)
   basePrice!: number;
 
-  @ApiProperty({ example: 100 })
+  @ApiPropertyOptional({
+    example: 100,
+    description:
+      'Required when the event uses per-ticket-type capacity; ignored when the event capacity is set as a single total',
+  })
+  @IsOptional()
   @IsInt()
   @Min(1)
-  quantity!: number;
+  quantity?: number;
 
   @ApiPropertyOptional({ example: 0 })
   @IsOptional()

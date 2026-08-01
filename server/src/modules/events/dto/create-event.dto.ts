@@ -1,10 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
+  IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Min,
 } from 'class-validator';
+import { CapacityMode } from '../../../common/enums/capacity-mode.enum';
 
 export class CreateEventDto {
   @ApiProperty({ example: 'Semana Acadêmica 2026' })
@@ -29,4 +33,22 @@ export class CreateEventDto {
   @IsOptional()
   @IsString()
   location?: string;
+
+  @ApiPropertyOptional({
+    enum: CapacityMode,
+    default: CapacityMode.PER_TICKET_TYPE,
+    example: CapacityMode.PER_TICKET_TYPE,
+  })
+  @IsOptional()
+  @IsEnum(CapacityMode)
+  capacityMode?: CapacityMode;
+
+  @ApiPropertyOptional({
+    example: 200,
+    description: 'Required when capacityMode is total',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  totalCapacity?: number;
 }

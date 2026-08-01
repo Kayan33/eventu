@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { EventStatus } from '../../../common/enums/event-status.enum';
+import { CapacityMode } from '../../../common/enums/capacity-mode.enum';
 import { Tenant } from '../../tenants/entities/tenant.entity';
 import { TicketType } from '../../ticket-types/entities/ticket-type.entity';
 import { EventFormField } from '../../event-form-fields/entities/event-form-field.entity';
@@ -42,6 +43,16 @@ export class Event {
 
   @Column({ type: 'enum', enum: EventStatus, default: EventStatus.DRAFT })
   status!: EventStatus;
+
+  @Column({
+    type: 'enum',
+    enum: CapacityMode,
+    default: CapacityMode.PER_TICKET_TYPE,
+  })
+  capacityMode!: CapacityMode;
+
+  @Column({ type: 'int', nullable: true })
+  totalCapacity?: number;
 
   @CreateDateColumn()
   createdAt!: Date;

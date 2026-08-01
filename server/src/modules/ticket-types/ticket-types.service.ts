@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TicketType } from './entities/ticket-type.entity';
 import { Event } from '../events/entities/event.entity';
+import { CapacityMode } from '../../common/enums/capacity-mode.enum';
 import { CreateTicketTypeDto } from './dto/create-ticket-type.dto';
 import { UpdateTicketTypeDto } from './dto/update-ticket-type.dto';
 
@@ -40,11 +41,25 @@ export class TicketTypesService {
   ): Promise<TicketType> {
     await this.assertEventBelongsToTenant(dto.eventId, tenantId);
 
+    const event = await this.eventRepository.findOne({
+      where: { id: dto.eventId },
+    });
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    if (event.capacityMode === CapacityMode.PER_TICKET_TYPE && !dto.quantity) {
+      throw new BadRequestException(
+        'quantity is required when the event uses per-ticket-type capacity',
+      );
+    }
+
     const ticketType = this.ticketTypeRepository.create({
       eventId: dto.eventId,
       name: dto.name,
       basePrice: dto.basePrice.toFixed(2),
-      quantity: dto.quantity,
+      quantity:
+        event.capacityMode === CapacityMode.TOTAL ? undefined : dto.quantity,
       displayOrder: dto.displayOrder,
     });
     return await this.ticketTypeRepository.save(ticketType);

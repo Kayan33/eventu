@@ -26,8 +26,8 @@ export class TicketType {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   basePrice!: string;
 
-  @Column({ type: 'int' })
-  quantity!: number;
+  @Column({ type: 'int', nullable: true })
+  quantity?: number;
 
   @Column({ type: 'int', default: 0 })
   sold!: number;

@@ -10,6 +10,7 @@ import { Event } from './entities/event.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventStatus } from '../../common/enums/event-status.enum';
+import { CapacityMode } from '../../common/enums/capacity-mode.enum';
 import { slugify } from '../../common/utils/slugify.util';
 
 @Injectable()
@@ -27,6 +28,13 @@ export class EventsService {
       throw new ConflictException('Event with this title already exists');
     }
 
+    const capacityMode = dto.capacityMode ?? CapacityMode.PER_TICKET_TYPE;
+    if (capacityMode === CapacityMode.TOTAL && !dto.totalCapacity) {
+      throw new BadRequestException(
+        'totalCapacity is required when capacityMode is total',
+      );
+    }
+
     const event = this.eventRepository.create({
       tenantId,
       title: dto.title,
@@ -35,6 +43,9 @@ export class EventsService {
       startDate: new Date(dto.startDate),
       endDate: new Date(dto.endDate),
       location: dto.location,
+      capacityMode,
+      totalCapacity:
+        capacityMode === CapacityMode.TOTAL ? dto.totalCapacity : undefined,
     });
     return await this.eventRepository.save(event);
   }
@@ -64,11 +75,22 @@ export class EventsService {
   ): Promise<Event> {
     const event = await this.findOne(id, tenantId);
 
-    const { startDate, endDate, ...rest } = dto;
+    const { startDate, endDate, capacityMode, totalCapacity, ...rest } = dto;
+    const nextCapacityMode = capacityMode ?? event.capacityMode;
+    const nextTotalCapacity = totalCapacity ?? event.totalCapacity;
+    if (nextCapacityMode === CapacityMode.TOTAL && !nextTotalCapacity) {
+      throw new BadRequestException(
+        'totalCapacity is required when capacityMode is total',
+      );
+    }
+
     Object.assign(event, {
       ...rest,
       ...(startDate && { startDate: new Date(startDate) }),
       ...(endDate && { endDate: new Date(endDate) }),
+      capacityMode: nextCapacityMode,
+      totalCapacity:
+        nextCapacityMode === CapacityMode.TOTAL ? nextTotalCapacity : undefined,
     });
     return await this.eventRepository.save(event);
   }
