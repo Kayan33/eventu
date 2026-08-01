@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Calendar, Users, Settings, X } from "lucide-react";
+import { Calendar, Receipt, Users, Settings, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getTeamMember } from "@/lib/api/users";
 import { cn } from "@/lib/utils/cn";
@@ -44,6 +44,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   const navItems = [
     { href: "/", label: "Eventos", icon: Calendar, active: pathname === "/" || pathname.startsWith("/eventos") },
+    { href: "/pagamentos", label: "Pagamentos", icon: Receipt, active: pathname === "/pagamentos" },
     { href: "/equipe", label: "Equipe", icon: Users, active: pathname === "/equipe", adminOnly: true },
     { href: "/configuracoes", label: "Configurações", icon: Settings, active: pathname === "/configuracoes" },
   ];
