@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
 import { useEventDetail } from "@/lib/hooks/useEventDetail";
 import { PanelLayout } from "@/components/panel/PanelLayout";
@@ -77,8 +77,20 @@ export default function EventDetailPage() {
           ) : null}
         </div>
 
-        <div className="mb-6 text-[13px] text-ink-soft">
-          {formatDateRange(event.startDate, event.endDate)}
+        <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-soft">
+          <span>{formatDateRange(event.startDate, event.endDate)}</span>
+          {event.status === "draft" ? (
+            <span>Página pública disponível após publicar</span>
+          ) : (
+            <a
+              href={`/${event.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-medium text-accent-700 hover:underline"
+            >
+              Ver página pública <ExternalLink size={12} />
+            </a>
+          )}
         </div>
 
         {detail.error ? <p className="mb-4 text-sm text-danger">{detail.error}</p> : null}

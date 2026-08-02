@@ -48,10 +48,12 @@ export default async function EventLandingPage({ params }: PageProps) {
     <main className="min-h-screen bg-bg">
       <div className="mx-auto max-w-[1100px] px-4 pb-10 pt-5 sm:px-6 sm:pb-14 sm:pt-8">
         {event.coverImageUrl ? (
-          <div className="aspect-[5/2] w-full overflow-hidden rounded-md">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={event.coverImageUrl} alt="" className="h-full w-full object-cover" />
-          </div>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={event.coverImageUrl}
+            alt=""
+            className="h-auto w-full rounded-md"
+          />
         ) : (
           <div className="aspect-[5/2] w-full rounded-md bg-accent-700" />
         )}

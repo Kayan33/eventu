@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export default function EventNotFound() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-bg px-6 text-center">

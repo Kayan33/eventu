@@ -33,7 +33,7 @@ export function OverviewTab({ detail }: { detail: Detail }) {
           <img
             src={event.coverImageUrl}
             alt=""
-            className="mb-2.5 h-32 w-full rounded-md object-cover"
+            className="mb-2.5 h-auto w-full rounded-md"
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
