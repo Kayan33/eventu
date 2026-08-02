@@ -53,6 +53,7 @@ export class EventsService {
       startDate: new Date(dto.startDate),
       endDate: new Date(dto.endDate),
       location: dto.location,
+      locationType: dto.locationType,
       capacityMode,
       totalCapacity:
         capacityMode === CapacityMode.TOTAL ? dto.totalCapacity : undefined,
@@ -73,6 +74,17 @@ export class EventsService {
       relations: { ticketTypes: true, formFields: true },
     });
     if (!event || (tenantId && event.tenantId !== tenantId)) {
+      throw new NotFoundException('Event not found');
+    }
+    return event;
+  }
+
+  async findBySlug(slug: string): Promise<Event> {
+    const event = await this.eventRepository.findOne({
+      where: { slug },
+      relations: { ticketTypes: true },
+    });
+    if (!event || event.status === EventStatus.DRAFT) {
       throw new NotFoundException('Event not found');
     }
     return event;

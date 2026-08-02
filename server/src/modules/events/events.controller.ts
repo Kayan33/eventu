@@ -18,6 +18,7 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { ActorType } from '../auth/decorators/actor-type.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { CurrentActor } from '../auth/decorators/current-actor.decorator';
 import type {
   JwtPayload,
@@ -48,6 +49,13 @@ export class EventsController {
     return this.eventsService.findAll(
       actor.type === 'user' ? actor.tenantId : undefined,
     );
+  }
+
+  @Public()
+  @Get('by-slug/:slug')
+  @ApiOperation({ summary: 'Get a published event by slug (public)' })
+  findBySlug(@Param('slug') slug: string) {
+    return this.eventsService.findBySlug(slug);
   }
 
   @Get(':id')

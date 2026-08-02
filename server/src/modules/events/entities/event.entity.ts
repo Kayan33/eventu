@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { EventStatus } from '../../../common/enums/event-status.enum';
 import { CapacityMode } from '../../../common/enums/capacity-mode.enum';
+import { LocationType } from '../../../common/enums/location-type.enum';
 import { Tenant } from '../../tenants/entities/tenant.entity';
 import { TicketType } from '../../ticket-types/entities/ticket-type.entity';
 import { EventFormField } from '../../event-form-fields/entities/event-form-field.entity';
@@ -40,6 +41,13 @@ export class Event {
 
   @Column({ nullable: true })
   location?: string;
+
+  @Column({
+    type: 'enum',
+    enum: LocationType,
+    default: LocationType.PRESENCIAL,
+  })
+  locationType!: LocationType;
 
   @Column({ nullable: true })
   coverImageUrl?: string;

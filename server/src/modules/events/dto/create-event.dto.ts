@@ -9,6 +9,7 @@ import {
   Min,
 } from 'class-validator';
 import { CapacityMode } from '../../../common/enums/capacity-mode.enum';
+import { LocationType } from '../../../common/enums/location-type.enum';
 
 export class CreateEventDto {
   @ApiProperty({ example: 'Semana Acadêmica 2026' })
@@ -33,6 +34,15 @@ export class CreateEventDto {
   @IsOptional()
   @IsString()
   location?: string;
+
+  @ApiPropertyOptional({
+    enum: LocationType,
+    default: LocationType.PRESENCIAL,
+    example: LocationType.PRESENCIAL,
+  })
+  @IsOptional()
+  @IsEnum(LocationType)
+  locationType?: LocationType;
 
   @ApiPropertyOptional({
     enum: CapacityMode,
