@@ -1,3 +1,4 @@
+import type { ChangeEvent } from "react";
 import { Field } from "@/components/ui/Field";
 import { Input, inputBaseClasses } from "@/components/ui/Input";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -7,18 +8,59 @@ import type { useEventDetail } from "@/lib/hooks/useEventDetail";
 type Detail = ReturnType<typeof useEventDetail>;
 
 export function OverviewTab({ detail }: { detail: Detail }) {
-  const { overview, updateOverview, overviewSaving, overviewSaved, saveOverview } = detail;
+  const {
+    overview,
+    updateOverview,
+    overviewSaving,
+    overviewSaved,
+    saveOverview,
+    event,
+    coverUploading,
+    uploadCover,
+  } = detail;
   const isTotal = overview.capacityMode === "total";
+
+  function handleCoverChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) void uploadCover(file);
+    e.target.value = "";
+  }
 
   return (
     <div className="rounded-md border border-divider bg-surface p-6">
-      <Field label="Nome do evento" htmlFor="ovTitle">
-        <Input
-          id="ovTitle"
-          value={overview.title}
-          onChange={(e) => updateOverview({ title: e.target.value })}
-        />
+      <Field label="Capa do evento" htmlFor="ovCover">
+        {event?.coverImageUrl ? (
+          <img
+            src={event.coverImageUrl}
+            alt=""
+            className="mb-2.5 h-32 w-full rounded-md object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        ) : null}
+        <div className="flex items-center gap-2.5">
+          <input
+            id="ovCover"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            onChange={handleCoverChange}
+            disabled={coverUploading}
+            className="text-sm text-ink-soft file:mr-3 file:h-9 file:rounded-md file:border file:border-divider file:bg-surface file:px-3.5 file:text-sm file:font-medium file:text-ink hover:file:border-accent-700"
+          />
+          {coverUploading ? <span className="text-xs text-ink-soft">Enviando…</span> : null}
+        </div>
       </Field>
+
+      <div className="mt-4">
+        <Field label="Nome do evento" htmlFor="ovTitle">
+          <Input
+            id="ovTitle"
+            value={overview.title}
+            onChange={(e) => updateOverview({ title: e.target.value })}
+          />
+        </Field>
+      </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3.5">
         <Field label="Data de início" htmlFor="ovStartDate">

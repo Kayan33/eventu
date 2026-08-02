@@ -18,19 +18,7 @@ interface ErrorBody {
   message?: string | string[];
 }
 
-export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
-  const { headers, body, ...rest } = options;
-
-  const res = await fetch(`${API_URL}${path}`, {
-    ...rest,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-
+async function handleResponse<T>(res: Response): Promise<T> {
   if (res.status === 204) {
     return undefined as T;
   }
@@ -45,4 +33,30 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   }
 
   return data as T;
+}
+
+export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
+  const { headers, body, ...rest } = options;
+
+  const res = await fetch(`${API_URL}${path}`, {
+    ...rest,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  return handleResponse<T>(res);
+}
+
+export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+
+  return handleResponse<T>(res);
 }

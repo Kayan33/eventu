@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { getEvent, publishEvent, updateEvent, type EventPayload } from "@/lib/api/events";
+import {
+  getEvent,
+  publishEvent,
+  updateEvent,
+  uploadEventCover,
+  type EventPayload,
+} from "@/lib/api/events";
 import {
   createTicketType,
   deleteTicketType,
@@ -129,6 +135,7 @@ export function useEventDetail(eventId: string) {
   const [overviewSaving, setOverviewSaving] = useState(false);
   const [overviewSaved, setOverviewSaved] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -198,6 +205,19 @@ export function useEventDetail(eventId: string) {
       setError(translateApiError(err, "Não foi possível salvar as alterações."));
     } finally {
       setOverviewSaving(false);
+    }
+  }
+
+  async function uploadCover(file: File) {
+    setCoverUploading(true);
+    setError(null);
+    try {
+      const updated = await uploadEventCover(eventId, file);
+      setEvent(updated);
+    } catch (err) {
+      setError(translateApiError(err, "Não foi possível enviar a capa do evento."));
+    } finally {
+      setCoverUploading(false);
     }
   }
 
@@ -446,6 +466,8 @@ export function useEventDetail(eventId: string) {
     overviewSaving,
     overviewSaved,
     saveOverview,
+    coverUploading,
+    uploadCover,
     publishing,
     publish,
     tickets,

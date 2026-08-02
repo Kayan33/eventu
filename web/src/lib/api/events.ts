@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, apiUpload } from "./client";
 import type { CapacityMode, EventEntity } from "@/lib/types/event";
 import type { JwtPayload } from "@/lib/types/auth";
 
@@ -32,9 +32,13 @@ export function publishEvent(id: string): Promise<EventEntity> {
   return apiFetch<EventEntity>(`/events/${id}/publish`, { method: "PATCH" });
 }
 
-// A brand-new organization always lands here empty-handed — this is what
-// decides whether login/cadastro drop the admin into the first-event wizard
-// or straight into the dashboard.
+export function uploadEventCover(id: string, file: File): Promise<EventEntity> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiUpload<EventEntity>(`/events/${id}/cover`, formData);
+}
+
+
 export async function resolvePostAuthDestination(actor: JwtPayload): Promise<string> {
   if (actor.type !== "user" || actor.role !== "admin") {
     return "/";

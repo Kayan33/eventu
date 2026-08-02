@@ -12,6 +12,7 @@ export interface EventEntity {
   startDate: string;
   endDate: string;
   location?: string;
+  coverImageUrl?: string;
   status: EventStatus;
   capacityMode: CapacityMode;
   totalCapacity?: number;
