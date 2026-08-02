@@ -32,7 +32,7 @@ export class TicketsService {
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
-  async create(dto: CreateTicketDto): Promise<Ticket> {
+  async create(dto: CreateTicketDto, clientId: string): Promise<Ticket> {
     return await this.dataSource.transaction(async (manager) => {
       const ticketType = await manager.findOne(TicketType, {
         where: { id: dto.ticketTypeId },
@@ -88,7 +88,7 @@ export class TicketsService {
 
       const ticket = manager.create(Ticket, {
         ticketTypeId: dto.ticketTypeId,
-        clientId: dto.clientId,
+        clientId,
         code: generateCode('EVT'),
         finalPrice,
         status: TicketStatus.RESERVED,

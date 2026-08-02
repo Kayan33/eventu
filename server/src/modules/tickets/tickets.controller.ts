@@ -14,6 +14,7 @@ import { ActorType } from '../auth/decorators/actor-type.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentActor } from '../auth/decorators/current-actor.decorator';
 import type {
+  ClientJwtPayload,
   JwtPayload,
   UserJwtPayload,
 } from '../auth/interfaces/jwt-payload.interface';
@@ -29,8 +30,11 @@ export class TicketsController {
   @ApiOperation({
     summary: 'Create a ticket (with form responses and payment) - client only',
   })
-  create(@Body() dto: CreateTicketDto) {
-    return this.ticketsService.create(dto);
+  create(
+    @Body() dto: CreateTicketDto,
+    @CurrentActor() actor: ClientJwtPayload,
+  ) {
+    return this.ticketsService.create(dto, actor.sub);
   }
 
   @Get()

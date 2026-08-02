@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  ArrayNotEmpty,
   IsArray,
   IsNotEmpty,
   IsString,
@@ -27,14 +26,11 @@ export class CreateTicketDto {
   @IsNotEmpty()
   ticketTypeId!: string;
 
-  @ApiProperty({ example: 'd5f1c2a4-1234-4a5b-9c8d-1234567890ef' })
-  @IsUUID()
-  @IsNotEmpty()
-  clientId!: string;
-
-  @ApiProperty({ type: [TicketFormResponseInputDto] })
+  @ApiProperty({
+    type: [TicketFormResponseInputDto],
+    description: 'Empty for events with no custom registration questions',
+  })
   @IsArray()
-  @ArrayNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => TicketFormResponseInputDto)
   formResponses!: TicketFormResponseInputDto[];
