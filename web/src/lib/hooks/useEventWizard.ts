@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createEvent, publishEvent, updateEvent, type EventPayload } from "@/lib/api/events";
 import {
@@ -6,7 +6,7 @@ import {
   deleteTicketType,
   updateTicketType,
 } from "@/lib/api/ticketTypes";
-import { updateTenantPix } from "@/lib/api/tenants";
+import { getTenant, updateTenantPix } from "@/lib/api/tenants";
 import { translateApiError } from "@/lib/api/errorMessages";
 import type { PixKeyType } from "@/lib/types/tenant";
 import type { CapacityMode } from "@/lib/types/event";
@@ -48,6 +48,7 @@ interface WizardState {
   pixKeyType: PixKeyType;
   pixKey: string;
   pixBeneficiary: string;
+  hasSavedPix: boolean;
 
   eventId: string | null;
   eventSlug: string | null;
@@ -86,6 +87,7 @@ function initialState(): WizardState {
     pixKeyType: "cpf",
     pixKey: "",
     pixBeneficiary: "",
+    hasSavedPix: false,
 
     eventId: null,
     eventSlug: null,
@@ -97,7 +99,20 @@ export function useEventWizard() {
   const tenantId = actor?.type === "user" ? actor.tenantId : null;
   const [state, setState] = useState<WizardState>(initialState);
 
-  const totalSteps = state.isFree ? 2 : 3;
+  useEffect(() => {
+    if (!tenantId) return;
+    let cancelled = false;
+    getTenant(tenantId).then((tenant) => {
+      if (!cancelled && tenant.pixKey && tenant.pixBeneficiary) {
+        setState((s) => ({ ...s, hasSavedPix: true }));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId]);
+
+  const totalSteps = state.isFree || state.hasSavedPix ? 2 : 3;
   const publicLink = state.eventSlug ? `eventu.com/${state.eventSlug}` : "";
 
   function update(patch: Partial<WizardState>) {
@@ -206,7 +221,7 @@ export function useEventWizard() {
         if (!state.eventId) throw new Error("Event not created yet");
         const eventId = await ensureEvent();
         await syncTicketTypes(eventId);
-        if (state.isFree) {
+        if (state.isFree || state.hasSavedPix) {
           setState((s) => ({ ...s, done: true, submitting: false }));
         } else {
           setState((s) => ({ ...s, step: 3, submitting: false }));
