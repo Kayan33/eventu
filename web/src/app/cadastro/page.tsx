@@ -56,6 +56,7 @@ export default function CadastroPage() {
       eyebrow="Para organizadores"
       title="Crie sua organização e comece a vender ingressos em minutos."
       description="Sem aprovação, sem burocracia, sem taxa de cadastro. Recebimento direto via Pix."
+      formMaxWidth="max-w-[560px]"
     >
       <h6 className="mb-2 text-sm font-medium text-accent-700">Cadastro de organizador</h6>
       <h2 className="mb-1.5 text-2xl font-semibold text-ink">Criar minha conta</h2>
@@ -64,57 +65,61 @@ export default function CadastroPage() {
       </p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <Field label="Nome completo" htmlFor="name">
-          <Input
-            id="name"
-            required
-            autoComplete="name"
-            placeholder="Maria Clara Santos"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </Field>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Nome completo" htmlFor="name">
+            <Input
+              id="name"
+              required
+              autoComplete="name"
+              placeholder="Maria Clara Santos"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </Field>
 
-        <Field label="Email" htmlFor="email">
-          <Input
-            id="email"
-            type="email"
-            required
-            autoComplete="email"
-            placeholder="maria@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </Field>
+          <Field label="Email" htmlFor="email">
+            <Input
+              id="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="maria@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </Field>
+        </div>
 
-        <Field label="Senha" htmlFor="password">
-          <PasswordInput
-            id="password"
-            required
-            minLength={6}
-            autoComplete="new-password"
-            placeholder="Mínimo 6 caracteres"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <PasswordStrengthMeter strength={strength} />
-        </Field>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Senha" htmlFor="password">
+            <PasswordInput
+              id="password"
+              required
+              minLength={6}
+              autoComplete="new-password"
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </Field>
 
-        <Field
-          label="Confirmar senha"
-          htmlFor="confirmPassword"
-          error={showMismatch ? "As senhas não coincidem." : undefined}
-        >
-          <PasswordInput
-            id="confirmPassword"
-            required
-            autoComplete="new-password"
-            placeholder="Repita a senha"
-            invalid={showMismatch}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-        </Field>
+          <Field
+            label="Confirmar senha"
+            htmlFor="confirmPassword"
+            error={showMismatch ? "As senhas não coincidem." : undefined}
+          >
+            <PasswordInput
+              id="confirmPassword"
+              required
+              autoComplete="new-password"
+              placeholder="Repita a senha"
+              invalid={showMismatch}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </Field>
+        </div>
+        <PasswordStrengthMeter strength={strength} />
 
         <div className="my-2 h-px bg-divider" />
 

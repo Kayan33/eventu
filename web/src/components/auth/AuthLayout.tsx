@@ -5,9 +5,16 @@ interface AuthLayoutProps {
   title: string;
   description: string;
   children: ReactNode;
+  formMaxWidth?: string;
 }
 
-export function AuthLayout({ eyebrow, title, description, children }: AuthLayoutProps) {
+export function AuthLayout({
+  eyebrow,
+  title,
+  description,
+  children,
+  formMaxWidth = "max-w-[420px]",
+}: AuthLayoutProps) {
   return (
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-2">
       <div className="hidden flex-col justify-between bg-brand-panel p-14 text-brand-panel-fg md:flex">
@@ -21,7 +28,7 @@ export function AuthLayout({ eyebrow, title, description, children }: AuthLayout
       </div>
 
       <div className="flex items-center justify-center p-8">
-        <div className="w-full max-w-[420px]">{children}</div>
+        <div className={`w-full ${formMaxWidth}`}>{children}</div>
       </div>
     </div>
   );
