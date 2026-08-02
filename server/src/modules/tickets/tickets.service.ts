@@ -22,6 +22,7 @@ const PAYMENT_EXPIRATION_MINUTES = 30;
 export interface TicketScope {
   clientId?: string;
   tenantId?: string;
+  eventId?: string;
 }
 
 @Injectable()
@@ -122,14 +123,28 @@ export class TicketsService {
         await manager.save(payment);
       }
 
-      return ticket;
+      const fullTicket = await manager.findOne(Ticket, {
+        where: { id: ticket.id },
+        relations: {
+          payment: true,
+          ticketType: { event: { tenant: true } },
+        },
+      });
+      return fullTicket!;
     });
   }
 
   async findAll(scope: TicketScope = {}): Promise<Ticket[]> {
     if (scope.clientId) {
       return await this.ticketRepository.find({
-        where: { clientId: scope.clientId },
+        where: {
+          clientId: scope.clientId,
+          ...(scope.eventId ? { ticketType: { eventId: scope.eventId } } : {}),
+        },
+        relations: {
+          payment: true,
+          ticketType: { event: { tenant: true } },
+        },
       });
     }
     if (scope.tenantId) {
@@ -149,7 +164,7 @@ export class TicketsService {
       relations: {
         formResponses: true,
         payment: true,
-        ticketType: { event: true },
+        ticketType: { event: { tenant: true } },
       },
     });
     if (!ticket) {

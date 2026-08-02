@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { createTicket, type TicketEntity } from "@/lib/api/tickets";
+import { useEffect, useState, type FormEvent } from "react";
+import { createTicket, listTickets, type TicketEntity } from "@/lib/api/tickets";
 import { translateApiError } from "@/lib/api/errorMessages";
 import { Field } from "@/components/ui/Field";
 import { Input, inputBaseClasses } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { FormFieldType } from "@/lib/types/formField";
+import { PaymentStep } from "./PaymentStep";
 import type { EventEntity } from "@/lib/types/event";
 import type { TicketType } from "@/lib/types/ticketType";
 
@@ -29,6 +30,10 @@ function htmlInputType(type: FormFieldType): string {
   return "text";
 }
 
+function isResumable(ticket: TicketEntity): boolean {
+  return ticket.status !== "cancelled" && ticket.status !== "expired";
+}
+
 export function RegistrationForm({ event }: RegistrationFormProps) {
   const ticketTypes = [...(event.ticketTypes ?? [])].sort(
     (a, b) => a.displayOrder - b.displayOrder,
@@ -45,6 +50,23 @@ export function RegistrationForm({ event }: RegistrationFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [ticket, setTicket] = useState<TicketEntity | null>(null);
+  const [checkingExisting, setCheckingExisting] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    listTickets({ eventId: event.id })
+      .then((tickets) => {
+        if (cancelled) return;
+        const existing = tickets.find(isResumable);
+        if (existing) setTicket(existing);
+      })
+      .finally(() => {
+        if (!cancelled) setCheckingExisting(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [event.id]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -65,20 +87,24 @@ export function RegistrationForm({ event }: RegistrationFormProps) {
   }
 
   if (ticket) {
-    return (
-      <div>
-        <p className="text-sm font-medium text-ink">Inscrição confirmada!</p>
-        <p className="mt-2 text-sm text-ink-soft">
-          Código: <span className="font-medium text-ink">{ticket.code}</span>
-        </p>
-        <p className="mt-1 text-sm text-ink-soft">
-          Valor:{" "}
-          <span className="font-medium text-ink">
-            {Number(ticket.finalPrice) > 0 ? `R$ ${ticket.finalPrice}` : "Gratuito"}
-          </span>
-        </p>
-      </div>
-    );
+    if (!ticket.payment) {
+      return (
+        <div>
+          <p className="text-sm font-medium text-ink">Inscrição confirmada!</p>
+          <p className="mt-2 text-sm text-ink-soft">
+            Código: <span className="font-medium text-ink">{ticket.code}</span>
+          </p>
+          <p className="mt-1 text-sm text-ink-soft">
+            Esse ingresso é gratuito — nenhum pagamento necessário.
+          </p>
+        </div>
+      );
+    }
+    return <PaymentStep ticket={ticket} />;
+  }
+
+  if (checkingExisting) {
+    return null;
   }
 
   if (allSoldOut) {

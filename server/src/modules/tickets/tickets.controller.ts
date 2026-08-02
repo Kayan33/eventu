@@ -6,6 +6,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TicketsService } from './tickets.service';
@@ -41,10 +42,13 @@ export class TicketsController {
   @ApiOperation({
     summary: 'List tickets (client sees own, staff sees own tenant)',
   })
-  findAll(@CurrentActor() actor: JwtPayload) {
+  findAll(
+    @CurrentActor() actor: JwtPayload,
+    @Query('eventId') eventId?: string,
+  ) {
     return this.ticketsService.findAll(
       actor.type === 'client'
-        ? { clientId: actor.sub }
+        ? { clientId: actor.sub, eventId }
         : { tenantId: actor.tenantId },
     );
   }

@@ -17,8 +17,36 @@ export interface TicketEntity {
   code: string;
   finalPrice: string;
   status: string;
+  payment?: {
+    id: string;
+    amount: string;
+    status: string;
+    pixReceiptUrl?: string;
+    rejectionReason?: string;
+    expiresAt: string;
+  };
+  ticketType?: {
+    id: string;
+    name: string;
+    event?: {
+      id: string;
+      title: string;
+      tenant?: {
+        id: string;
+        name: string;
+        pixKey?: string;
+        pixKeyType?: string;
+        pixBeneficiary?: string;
+      };
+    };
+  };
 }
 
 export function createTicket(payload: CreateTicketPayload): Promise<TicketEntity> {
   return apiFetch<TicketEntity>("/tickets", { method: "POST", body: payload });
+}
+
+export function listTickets(filters?: { eventId?: string }): Promise<TicketEntity[]> {
+  const query = filters?.eventId ? `?eventId=${filters.eventId}` : "";
+  return apiFetch<TicketEntity[]>(`/tickets${query}`);
 }
