@@ -82,7 +82,7 @@ export class EventsService {
   async findBySlug(slug: string): Promise<Event> {
     const event = await this.eventRepository.findOne({
       where: { slug },
-      relations: { ticketTypes: true },
+      relations: { ticketTypes: true, formFields: true },
     });
     if (!event || event.status === EventStatus.DRAFT) {
       throw new NotFoundException('Event not found');
