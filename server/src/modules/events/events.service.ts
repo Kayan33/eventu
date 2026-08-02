@@ -122,6 +122,7 @@ export class EventsService {
       throw new BadRequestException('Cover image must be at most 5MB');
     }
 
+    const previousCoverUrl = event.coverImageUrl;
     const path = `${event.id}-${Date.now()}.${extension}`;
     event.coverImageUrl = await this.storageService.uploadPublicFile(
       COVER_IMAGE_BUCKET,
@@ -129,13 +130,28 @@ export class EventsService {
       file.buffer,
       file.mimetype,
     );
-    return await this.eventRepository.save(event);
+    const saved = await this.eventRepository.save(event);
+
+    if (previousCoverUrl) {
+      await this.storageService.deletePublicFileByUrl(
+        COVER_IMAGE_BUCKET,
+        previousCoverUrl,
+      );
+    }
+
+    return saved;
   }
 
   async remove(id: string, tenantId: string): Promise<void> {
     const event = await this.findOne(id, tenantId);
     if (event.status !== EventStatus.DRAFT) {
       throw new BadRequestException('Only draft events can be deleted');
+    }
+    if (event.coverImageUrl) {
+      await this.storageService.deletePublicFileByUrl(
+        COVER_IMAGE_BUCKET,
+        event.coverImageUrl,
+      );
     }
     await this.eventRepository.remove(event);
   }
