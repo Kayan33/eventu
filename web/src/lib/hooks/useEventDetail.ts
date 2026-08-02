@@ -158,9 +158,9 @@ export function useEventDetail(eventId: string) {
         startTime: toLocalTimeInputValue(start),
         endDate: toLocalDateInputValue(end),
         endTime: toLocalTimeInputValue(end),
-        locationType: "presencial",
-        address: ev.location ?? "",
-        onlineLink: "",
+        locationType: ev.locationType,
+        address: ev.locationType === "presencial" ? (ev.location ?? "") : "",
+        onlineLink: ev.locationType === "online" ? (ev.location ?? "") : "",
         description: ev.description ?? "",
         capacityMode: ev.capacityMode,
         totalCapacity: ev.totalCapacity !== undefined ? String(ev.totalCapacity) : "",
@@ -191,6 +191,7 @@ export function useEventDetail(eventId: string) {
         startDate: new Date(`${overview.startDate}T${overview.startTime}`).toISOString(),
         endDate: new Date(`${overview.endDate}T${overview.endTime}`).toISOString(),
         location: overview.locationType === "presencial" ? overview.address : overview.onlineLink,
+        locationType: overview.locationType,
         capacityMode: overview.capacityMode,
         totalCapacity:
           overview.capacityMode === "total"

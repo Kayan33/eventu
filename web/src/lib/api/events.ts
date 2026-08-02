@@ -1,5 +1,5 @@
 import { apiFetch, apiUpload } from "./client";
-import type { CapacityMode, EventEntity } from "@/lib/types/event";
+import type { CapacityMode, EventEntity, LocationType } from "@/lib/types/event";
 import type { JwtPayload } from "@/lib/types/auth";
 
 export interface EventPayload {
@@ -8,6 +8,7 @@ export interface EventPayload {
   startDate: string;
   endDate: string;
   location?: string;
+  locationType?: LocationType;
   capacityMode?: CapacityMode;
   totalCapacity?: number;
 }
@@ -18,6 +19,10 @@ export function listEvents(): Promise<EventEntity[]> {
 
 export function getEvent(id: string): Promise<EventEntity> {
   return apiFetch<EventEntity>(`/events/${id}`);
+}
+
+export function getEventBySlug(slug: string): Promise<EventEntity> {
+  return apiFetch<EventEntity>(`/events/by-slug/${slug}`);
 }
 
 export function createEvent(payload: EventPayload): Promise<EventEntity> {

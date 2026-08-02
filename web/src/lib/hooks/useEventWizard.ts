@@ -155,6 +155,7 @@ export function useEventWizard() {
       startDate: new Date(`${state.startDate}T${state.startTime}`).toISOString(),
       endDate: new Date(`${state.endDate}T${state.endTime}`).toISOString(),
       location: state.locationType === "presencial" ? state.address : state.onlineLink,
+      locationType: state.locationType,
       capacityMode: state.capacityMode,
       totalCapacity:
         state.capacityMode === "total" ? Number(state.totalCapacity) || undefined : undefined,

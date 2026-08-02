@@ -2,6 +2,7 @@ import type { TicketType } from "@/lib/types/ticketType";
 
 export type EventStatus = "draft" | "published" | "ongoing" | "finished" | "cancelled";
 export type CapacityMode = "per_ticket_type" | "total";
+export type LocationType = "presencial" | "online";
 
 export interface EventEntity {
   id: string;
@@ -12,6 +13,7 @@ export interface EventEntity {
   startDate: string;
   endDate: string;
   location?: string;
+  locationType: LocationType;
   coverImageUrl?: string;
   status: EventStatus;
   capacityMode: CapacityMode;
