@@ -1,18 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { TicketType } from "@/lib/types/ticketType";
 import type { CapacityMode } from "@/lib/types/event";
 
 interface TicketListProps {
+  slug: string;
   ticketTypes: TicketType[];
   capacityMode: CapacityMode;
   totalCapacity?: number;
+  hasForm: boolean;
 }
 
-export function TicketList({ ticketTypes, capacityMode, totalCapacity }: TicketListProps) {
+export function TicketList({
+  slug,
+  ticketTypes,
+  capacityMode,
+  totalCapacity,
+  hasForm,
+}: TicketListProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [notice, setNotice] = useState(false);
 
   const sortedTypes = [...ticketTypes].sort((a, b) => a.displayOrder - b.displayOrder);
   const isTotal = capacityMode === "total";
@@ -45,6 +53,13 @@ export function TicketList({ ticketTypes, capacityMode, totalCapacity }: TicketL
         </p>
       ) : null}
 
+      {hasForm ? (
+        <p className="mb-3 text-[13px] text-ink-soft">
+          O valor de cada ingresso é calculado depois que você responde o formulário de
+          inscrição.
+        </p>
+      ) : null}
+
       <div className="flex flex-col gap-3">
         {sortedTypes.map((t) => {
           const soldOut = isSoldOut(t);
@@ -66,12 +81,14 @@ export function TicketList({ ticketTypes, capacityMode, totalCapacity }: TicketL
                     </div>
                   )}
                 </div>
-                <div className="whitespace-nowrap text-sm font-semibold text-accent-700">
-                  {Number(t.basePrice) > 0 ? `R$ ${t.basePrice}` : "Gratuito"}
-                </div>
+                {hasForm ? null : (
+                  <div className="whitespace-nowrap text-sm font-semibold text-accent-700">
+                    {Number(t.basePrice) > 0 ? `R$ ${t.basePrice}` : "Gratuito"}
+                  </div>
+                )}
               </div>
 
-              {soldOut ? null : (
+              {soldOut || hasForm ? null : (
                 <div className="mt-2.5 flex items-center justify-end gap-3">
                   <button
                     type="button"
@@ -99,17 +116,22 @@ export function TicketList({ ticketTypes, capacityMode, totalCapacity }: TicketL
         })}
       </div>
 
-      <button
-        type="button"
-        disabled={!anyAvailable}
-        onClick={() => setNotice(true)}
-        className="mt-4 flex h-11 w-full items-center justify-center rounded-md bg-accent-700 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        {anyAvailable ? "Fazer inscrição" : "Esgotado"}
-      </button>
-      {notice ? (
-        <p className="mt-2 text-center text-xs text-ink-soft">Inscrições abrem em breve.</p>
-      ) : null}
+      {anyAvailable ? (
+        <Link
+          href={`/${slug}/inscricao`}
+          className="mt-4 flex h-11 w-full items-center justify-center rounded-md bg-accent-700 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+        >
+          Fazer inscrição
+        </Link>
+      ) : (
+        <button
+          type="button"
+          disabled
+          className="mt-4 flex h-11 w-full cursor-not-allowed items-center justify-center rounded-md bg-accent-700 text-sm font-semibold text-white opacity-40"
+        >
+          Esgotado
+        </button>
+      )}
     </div>
   );
 }

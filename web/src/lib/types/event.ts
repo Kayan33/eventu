@@ -1,4 +1,5 @@
 import type { TicketType } from "@/lib/types/ticketType";
+import type { EventFormField } from "@/lib/types/formField";
 
 export type EventStatus = "draft" | "published" | "ongoing" | "finished" | "cancelled";
 export type CapacityMode = "per_ticket_type" | "total";
@@ -21,4 +22,5 @@ export interface EventEntity {
   createdAt: string;
   updatedAt: string;
   ticketTypes?: TicketType[];
+  formFields?: EventFormField[];
 }

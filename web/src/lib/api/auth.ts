@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { JwtPayload, UserJwtPayload } from "@/lib/types/auth";
+import type { ClientJwtPayload, JwtPayload, UserJwtPayload } from "@/lib/types/auth";
 
 export interface LoginPayload {
   email: string;
@@ -11,6 +11,13 @@ export interface RegisterOrganizationPayload {
   name: string;
   email: string;
   password: string;
+}
+
+export interface RegisterClientPayload {
+  name: string;
+  email: string;
+  password: string;
+  cpf: string;
 }
 
 interface AuthResponse<T> {
@@ -31,6 +38,17 @@ export function registerOrganization(
     method: "POST",
     body: payload,
   });
+}
+
+export function loginClient(payload: LoginPayload): Promise<AuthResponse<ClientJwtPayload>> {
+  return apiFetch<AuthResponse<ClientJwtPayload>>("/auth/client-login", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function registerClient(payload: RegisterClientPayload): Promise<void> {
+  return apiFetch<void>("/clients", { method: "POST", body: payload });
 }
 
 export function fetchMe(): Promise<AuthResponse<JwtPayload>> {

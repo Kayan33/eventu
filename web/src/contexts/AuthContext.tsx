@@ -10,10 +10,13 @@ import {
 } from "react";
 import {
   fetchMe,
+  loginClient,
   loginStaff,
   logout as logoutRequest,
+  registerClient,
   registerOrganization,
   type LoginPayload,
+  type RegisterClientPayload,
   type RegisterOrganizationPayload,
 } from "@/lib/api/auth";
 import type { JwtPayload } from "@/lib/types/auth";
@@ -23,6 +26,8 @@ interface AuthContextValue {
   loading: boolean;
   login: (payload: LoginPayload) => Promise<JwtPayload>;
   register: (payload: RegisterOrganizationPayload) => Promise<JwtPayload>;
+  loginAsClient: (payload: LoginPayload) => Promise<JwtPayload>;
+  registerAsClient: (payload: RegisterClientPayload) => Promise<JwtPayload>;
   logout: () => Promise<void>;
 }
 
@@ -60,13 +65,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return current;
   }
 
+  async function loginAsClient(payload: LoginPayload) {
+    const { actor: current } = await loginClient(payload);
+    setActor(current);
+    return current;
+  }
+
+  async function registerAsClient(payload: RegisterClientPayload) {
+    await registerClient(payload);
+    return loginAsClient({ email: payload.email, password: payload.password });
+  }
+
   async function logout() {
     await logoutRequest();
     setActor(null);
   }
 
   return (
-    <AuthContext.Provider value={{ actor, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ actor, loading, login, register, loginAsClient, registerAsClient, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -97,9 +97,11 @@ export default async function EventLandingPage({ params }: PageProps) {
         <div className="mt-4 rounded-md border border-divider bg-surface p-5 sm:mt-6 sm:p-8">
           <h2 className="mb-4 text-lg font-semibold text-ink sm:text-xl">Ingressos</h2>
           <TicketList
+            slug={event.slug}
             ticketTypes={event.ticketTypes ?? []}
             capacityMode={event.capacityMode}
             totalCapacity={event.totalCapacity}
+            hasForm={(event.formFields?.length ?? 0) > 0}
           />
         </div>
       </div>
