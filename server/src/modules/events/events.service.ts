@@ -12,12 +12,22 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { EventStatus } from '../../common/enums/event-status.enum';
 import { CapacityMode } from '../../common/enums/capacity-mode.enum';
 import { slugify } from '../../common/utils/slugify.util';
+import { StorageService } from '../storage/storage.service';
+
+const COVER_IMAGE_BUCKET = 'event-covers';
+const COVER_IMAGE_MIME_EXTENSIONS: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+};
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectRepository(Event)
     private readonly eventRepository: Repository<Event>,
+    private readonly storageService: StorageService,
   ) {}
 
   async create(dto: CreateEventDto, tenantId: string): Promise<Event> {
@@ -92,6 +102,33 @@ export class EventsService {
       totalCapacity:
         nextCapacityMode === CapacityMode.TOTAL ? nextTotalCapacity : undefined,
     });
+    return await this.eventRepository.save(event);
+  }
+
+  async uploadCover(
+    id: string,
+    file: Express.Multer.File,
+    tenantId: string,
+  ): Promise<Event> {
+    const event = await this.findOne(id, tenantId);
+
+    const extension = COVER_IMAGE_MIME_EXTENSIONS[file.mimetype];
+    if (!extension) {
+      throw new BadRequestException(
+        'Cover image must be PNG, JPEG, WEBP or GIF',
+      );
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new BadRequestException('Cover image must be at most 5MB');
+    }
+
+    const path = `${event.id}-${Date.now()}.${extension}`;
+    event.coverImageUrl = await this.storageService.uploadPublicFile(
+      COVER_IMAGE_BUCKET,
+      path,
+      file.buffer,
+      file.mimetype,
+    );
     return await this.eventRepository.save(event);
   }
 

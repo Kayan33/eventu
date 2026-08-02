@@ -41,6 +41,9 @@ export class Event {
   @Column({ nullable: true })
   location?: string;
 
+  @Column({ nullable: true })
+  coverImageUrl?: string;
+
   @Column({ type: 'enum', enum: EventStatus, default: EventStatus.DRAFT })
   status!: EventStatus;
 

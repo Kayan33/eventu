@@ -8,7 +8,10 @@ import {
   Patch,
   Post,
   Put,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -82,6 +85,21 @@ export class EventsController {
     @CurrentActor() actor: UserJwtPayload,
   ) {
     return this.eventsService.remove(id, actor.tenantId);
+  }
+
+  @ActorType('user')
+  @Roles(UserRole.ADMIN, UserRole.EDITOR)
+  @Post(':id/cover')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({
+    summary: 'Upload the event cover image (staff only, own tenant)',
+  })
+  uploadCover(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentActor() actor: UserJwtPayload,
+  ) {
+    return this.eventsService.uploadCover(id, file, actor.tenantId);
   }
 
   @ActorType('user')
