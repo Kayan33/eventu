@@ -51,9 +51,13 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   return handleResponse<T>(res);
 }
 
-export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+export async function apiUpload<T>(
+  path: string,
+  formData: FormData,
+  method: "POST" | "PATCH" | "PUT" = "POST",
+): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
-    method: "POST",
+    method,
     credentials: "include",
     body: formData,
   });

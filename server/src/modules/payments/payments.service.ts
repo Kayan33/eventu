@@ -9,16 +9,25 @@ import { Payment } from './entities/payment.entity';
 import { Ticket } from '../tickets/entities/ticket.entity';
 import { PaymentStatus } from '../../common/enums/payment-status.enum';
 import { TicketStatus } from '../../common/enums/ticket-status.enum';
-import { UploadPaymentDto } from './dto/upload-payment.dto';
 import {
   PaymentReviewStatus,
   UpdatePaymentStatusDto,
 } from './dto/update-payment-status.dto';
+import { StorageService } from '../storage/storage.service';
 
 export interface PaymentScope {
   clientId?: string;
   tenantId?: string;
 }
+
+const RECEIPT_BUCKET = 'payment-receipts';
+const RECEIPT_SIGNED_URL_SECONDS = 300;
+const RECEIPT_MIME_EXTENSIONS: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+};
 
 @Injectable()
 export class PaymentsService {
@@ -27,6 +36,7 @@ export class PaymentsService {
     private readonly paymentRepository: Repository<Payment>,
     @InjectRepository(Ticket)
     private readonly ticketRepository: Repository<Ticket>,
+    private readonly storageService: StorageService,
   ) {}
 
   async findByStatus(
@@ -76,7 +86,7 @@ export class PaymentsService {
 
   async upload(
     id: string,
-    dto: UploadPaymentDto,
+    file: Express.Multer.File,
     clientId: string,
   ): Promise<Payment> {
     const payment = await this.findOne(id, { clientId });
@@ -86,10 +96,38 @@ export class PaymentsService {
       );
     }
 
-    payment.pixReceiptUrl = dto.pixReceiptUrl;
+    const extension = RECEIPT_MIME_EXTENSIONS[file.mimetype];
+    if (!extension) {
+      throw new BadRequestException('Receipt must be PNG, JPEG, WEBP or PDF');
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new BadRequestException('Receipt must be at most 5MB');
+    }
+
+    const path = `${payment.id}-${Date.now()}.${extension}`;
+    // pixReceiptUrl holds a private bucket path here, not a public URL —
+    // viewing it requires a signed URL, see getReceiptUrl().
+    payment.pixReceiptUrl = await this.storageService.uploadPrivateFile(
+      RECEIPT_BUCKET,
+      path,
+      file.buffer,
+      file.mimetype,
+    );
     payment.uploadedAt = new Date();
     payment.status = PaymentStatus.UPLOADED;
     return await this.paymentRepository.save(payment);
+  }
+
+  async getReceiptUrl(id: string, scope: PaymentScope = {}): Promise<string> {
+    const payment = await this.findOne(id, scope);
+    if (!payment.pixReceiptUrl) {
+      throw new NotFoundException('This payment has no receipt yet');
+    }
+    return await this.storageService.createSignedUrl(
+      RECEIPT_BUCKET,
+      payment.pixReceiptUrl,
+      RECEIPT_SIGNED_URL_SECONDS,
+    );
   }
 
   async review(

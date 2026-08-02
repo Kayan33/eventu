@@ -6,11 +6,13 @@ import {
   ParseUUIDPipe,
   Patch,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { PaymentStatus } from '../../common/enums/payment-status.enum';
-import { UploadPaymentDto } from './dto/upload-payment.dto';
 import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { ActorType } from '../auth/decorators/actor-type.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -59,13 +61,31 @@ export class PaymentsController {
 
   @ActorType('client')
   @Patch(':id/upload')
+  @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload the PIX receipt for your own payment' })
   upload(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UploadPaymentDto,
+    @UploadedFile() file: Express.Multer.File,
     @CurrentActor() actor: ClientJwtPayload,
   ) {
-    return this.paymentsService.upload(id, dto, actor.sub);
+    return this.paymentsService.upload(id, file, actor.sub);
+  }
+
+  @Get(':id/receipt-url')
+  @ApiOperation({
+    summary: 'Get a short-lived signed URL to view the payment receipt',
+  })
+  async getReceiptUrl(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentActor() actor: JwtPayload,
+  ) {
+    const url = await this.paymentsService.getReceiptUrl(
+      id,
+      actor.type === 'client'
+        ? { clientId: actor.sub }
+        : { tenantId: actor.tenantId },
+    );
+    return { url };
   }
 
   @ActorType('user')

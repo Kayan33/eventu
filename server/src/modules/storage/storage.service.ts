@@ -33,6 +33,43 @@ export class StorageService {
     return data.publicUrl;
   }
 
+  async uploadPrivateFile(
+    bucket: string,
+    path: string,
+    file: Buffer,
+    contentType: string,
+  ): Promise<string> {
+    const { error } = await this.client.storage
+      .from(bucket)
+      .upload(path, file, { contentType, upsert: true });
+
+    if (error) {
+      throw new InternalServerErrorException(
+        `Failed to upload file: ${error.message}`,
+      );
+    }
+
+    return path;
+  }
+
+  async createSignedUrl(
+    bucket: string,
+    path: string,
+    expiresInSeconds: number,
+  ): Promise<string> {
+    const { data, error } = await this.client.storage
+      .from(bucket)
+      .createSignedUrl(path, expiresInSeconds);
+
+    if (error || !data) {
+      throw new InternalServerErrorException(
+        `Failed to create signed URL: ${error?.message}`,
+      );
+    }
+
+    return data.signedUrl;
+  }
+
   async deletePublicFileByUrl(
     bucket: string,
     publicUrl: string,
