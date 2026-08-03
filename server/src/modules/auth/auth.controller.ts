@@ -18,10 +18,14 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   private setAuthCookie(res: Response, accessToken: string): void {
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      // Cross-site cookies (frontend and backend on different domains in
+      // production) require SameSite=None, which browsers only honor when
+      // paired with Secure. Locally, front/back share "localhost" so Lax works.
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: ACCESS_TOKEN_COOKIE_MAX_AGE_MS,
       path: '/',
     });
@@ -69,7 +73,12 @@ export class AuthController {
   @Post('logout')
   @ApiOperation({ summary: 'Clear the session cookie' })
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie(ACCESS_TOKEN_COOKIE, { path: '/' });
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.clearCookie(ACCESS_TOKEN_COOKIE, {
+      path: '/',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+    });
     return { success: true };
   }
 
