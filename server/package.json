@@ -5,6 +5,7 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "packageManager": "yarn@4.17.1",
   "engines": {
     "node": ">=22"
   },
