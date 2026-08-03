@@ -4,7 +4,7 @@ services:
     runtime: node
     rootDir: server
     plan: free
-    buildCommand: corepack enable && yarn install --frozen-lockfile && yarn build
+    buildCommand: corepack yarn install --frozen-lockfile && corepack yarn build
     startCommand: yarn start:prod
     envVars:
       - key: NODE_ENV
