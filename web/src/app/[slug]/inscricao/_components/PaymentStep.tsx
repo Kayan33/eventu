@@ -88,13 +88,26 @@ export function PaymentStep({ ticket }: PaymentStepProps) {
       ) : null}
 
       <div className="mt-4 rounded-md border border-divider bg-bg p-4">
-        <p className="text-xs text-ink-soft">Valor a pagar</p>
-        <p className="text-2xl font-semibold text-ink">R$ {payment?.amount}</p>
+        <p className="text-center text-xs text-ink-soft">Valor a pagar</p>
+        <p className="text-center text-2xl font-semibold text-ink">R$ {payment?.amount}</p>
+
+        {tenant?.pixQrCodeUrl ? (
+          <div className="mt-4 flex flex-col items-center">
+            <p className="mb-2 text-xs text-ink-soft">Escaneie o QR code</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={tenant.pixQrCodeUrl}
+              alt="QR code do Pix"
+              className="h-64 w-64 rounded-md border border-divider bg-surface object-contain"
+            />
+          </div>
+        ) : null}
 
         {tenant?.pixKey ? (
           <div className="mt-4">
             <p className="text-xs text-ink-soft">
-              Chave PIX ({PIX_KEY_TYPE_LABELS[tenant.pixKeyType ?? ""] ?? tenant.pixKeyType})
+              {tenant.pixQrCodeUrl ? "Ou use a chave PIX" : "Chave PIX"} (
+              {PIX_KEY_TYPE_LABELS[tenant.pixKeyType ?? ""] ?? tenant.pixKeyType})
               {tenant.pixBeneficiary ? ` — ${tenant.pixBeneficiary}` : ""}
             </p>
             <div className="mt-1.5 flex items-center gap-2">
