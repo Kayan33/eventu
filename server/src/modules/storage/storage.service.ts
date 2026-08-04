@@ -80,7 +80,14 @@ export class StorageService {
       return;
     }
     const path = publicUrl.slice(index + marker.length);
+    await this.deleteFile(bucket, path);
+  }
 
+  async deletePrivateFile(bucket: string, path: string): Promise<void> {
+    await this.deleteFile(bucket, path);
+  }
+
+  private async deleteFile(bucket: string, path: string): Promise<void> {
     const { error } = await this.client.storage.from(bucket).remove([path]);
     if (error) {
       this.logger.warn(

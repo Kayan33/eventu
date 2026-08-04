@@ -109,6 +109,7 @@ export class PaymentsService {
       throw new BadRequestException('Receipt must be at most 5MB');
     }
 
+    const previousPath = payment.pixReceiptUrl;
     const path = `${payment.id}-${Date.now()}.${extension}`;
     // pixReceiptUrl holds a private bucket path here, not a public URL —
     // viewing it requires a signed URL, see getReceiptUrl().
@@ -121,7 +122,13 @@ export class PaymentsService {
     payment.uploadedAt = new Date();
     payment.status = PaymentStatus.UPLOADED;
     payment.rejectionReason = undefined;
-    return await this.paymentRepository.save(payment);
+    const saved = await this.paymentRepository.save(payment);
+
+    if (previousPath) {
+      await this.storageService.deletePrivateFile(RECEIPT_BUCKET, previousPath);
+    }
+
+    return saved;
   }
 
   async getReceiptUrl(id: string, scope: PaymentScope = {}): Promise<string> {
