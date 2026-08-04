@@ -38,6 +38,10 @@ export default function EquipePage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState<UserRole>("editor");
 
+  const [confirmRemove, setConfirmRemove] = useState<TeamMember | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -87,13 +91,22 @@ export default function EquipePage() {
   }
 
   async function handleRemove(id: string) {
-    setError(null);
+    setRemoveError(null);
+    setRemoving(true);
     try {
       await removeTeamMember(id);
       setMembers((m) => m.filter((x) => x.id !== id));
+      setConfirmRemove(null);
     } catch (err) {
-      setError(translateApiError(err, "Não foi possível remover essa pessoa."));
+      setRemoveError(translateApiError(err, "Não foi possível remover essa pessoa."));
+    } finally {
+      setRemoving(false);
     }
+  }
+
+  function closeConfirmRemove() {
+    setConfirmRemove(null);
+    setRemoveError(null);
   }
 
   if (!ready) return null;
@@ -227,7 +240,7 @@ export default function EquipePage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void handleRemove(member.id)}
+                        onClick={() => setConfirmRemove(member)}
                         title="Remover"
                         className="flex h-9 w-9 items-center justify-center rounded-md text-ink-soft transition-colors hover:bg-neutral-bar hover:text-danger"
                       >
@@ -241,6 +254,40 @@ export default function EquipePage() {
           </div>
         )}
       </div>
+
+      {confirmRemove ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-[420px] rounded-md border border-divider bg-surface p-6">
+            <h2 className="mb-2 text-lg font-semibold text-ink">Remover pessoa da equipe</h2>
+            <p className="mb-5 text-sm text-ink-soft">
+              Tem certeza que quer remover{" "}
+              <span className="font-medium text-ink">{confirmRemove.name}</span> da sua equipe?
+              Essa pessoa perderá o acesso ao painel imediatamente.
+            </p>
+
+            {removeError ? <p className="mb-4 text-sm text-danger">{removeError}</p> : null}
+
+            <div className="flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={closeConfirmRemove}
+                disabled={removing}
+                className="h-10 rounded-md border border-divider bg-surface px-4 text-sm font-medium text-ink hover:border-accent-700 hover:text-accent-700 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleRemove(confirmRemove.id)}
+                disabled={removing}
+                className="flex h-10 items-center justify-center rounded-md bg-danger px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {removing ? "Removendo…" : "Remover"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </PanelLayout>
   );
 }

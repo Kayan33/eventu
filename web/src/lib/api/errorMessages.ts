@@ -11,6 +11,8 @@ const KNOWN_MESSAGES: Record<string, string> = {
     "Já existe uma conta com esse email.",
   "Client with this CPF already exists":
     "Já existe uma conta com esse CPF.",
+  "Tenant must have at least one admin":
+    "A organização precisa ter pelo menos um admin, não é possível remover ou rebaixar o único admin restante.",
 };
 
 export function translateApiError(err: unknown, fallback: string): string {
