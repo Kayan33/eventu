@@ -1,34 +1,29 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Building2 } from "lucide-react";
+import { Ticket } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Button } from "@/components/ui/Button";
-import { useAuth } from "@/contexts/AuthContext";
 import { translateApiError } from "@/lib/api/errorMessages";
-import { resolvePostAuthDestination } from "@/lib/api/events";
 
-export default function LoginPage() {
-  const router = useRouter();
-  const { login } = useAuth();
-
+export function ClientLoginForm() {
+  const { loginAsClient } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      const actor = await login({ email, password });
-      router.push(await resolvePostAuthDestination(actor));
+      await loginAsClient({ email, password });
     } catch (err) {
       setError(translateApiError(err, "Não foi possível entrar."));
     } finally {
@@ -38,18 +33,18 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      eyebrow="Bem-vindo de volta"
-      title="Gerencie seus eventos e acompanhe suas vendas."
-      description="Congressos, semanas acadêmicas e festas — tudo em um só painel."
+      eyebrow="Área do participante"
+      title="Acompanhe suas inscrições e comprovantes."
+      description="Entre com o email e senha que você usou pra se inscrever em qualquer evento."
     >
       <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-divider bg-bg px-3 py-1 text-xs font-medium text-ink-soft">
-        <Building2 size={12} aria-hidden="true" />
-        Login de organizador
+        <Ticket size={12} aria-hidden="true" />
+        Login de participante
       </span>
       <h6 className="mb-2 text-sm font-medium text-accent-700">Acesso</h6>
       <h2 className="mb-1.5 text-2xl font-semibold text-ink">Entrar</h2>
       <p className="mb-7 text-sm text-ink-soft">
-        Entre para acessar o painel da sua organização.
+        Use o mesmo login que você criou ao se inscrever em um evento.
       </p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
@@ -84,16 +79,16 @@ export default function LoginPage() {
       </form>
 
       <p className="mt-6 text-center text-sm text-ink-soft">
-        Não tem conta?{" "}
-        <Link href="/cadastro" className="font-medium text-accent-700">
-          Cadastre-se
+        Ainda não se inscreveu em nenhum evento?{" "}
+        <Link href="/" className="font-medium text-accent-700">
+          Ver eventos
         </Link>
       </p>
 
       <p className="mt-2 text-center text-xs text-ink-soft">
-        Comprou um ingresso?{" "}
-        <Link href="/minhas-inscricoes" className="font-medium text-accent-700">
-          Entre como participante
+        É organizador de eventos?{" "}
+        <Link href="/login" className="font-medium text-accent-700">
+          Entre como organizador
         </Link>
       </p>
     </AuthLayout>
