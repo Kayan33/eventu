@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Eventu",
+  title: "Eventkt",
   description: "Página inicial organizada com as rotas e arquivos do app.",
 };
 

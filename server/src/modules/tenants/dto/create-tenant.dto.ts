@@ -18,7 +18,9 @@ export class CreateTenantDto {
   @IsEnum(PixKeyType)
   pixKeyType?: PixKeyType;
 
-  @ApiPropertyOptional({ example: 'https://cdn.eventu.com/qrcodes/tenant.png' })
+  @ApiPropertyOptional({
+    example: 'https://cdn.eventkt.com.br/qrcodes/tenant.png',
+  })
   @IsOptional()
   @IsString()
   pixQrCodeUrl?: string;

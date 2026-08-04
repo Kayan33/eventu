@@ -60,7 +60,7 @@ export function ClientSidebar({ open, onClose }: ClientSidebarProps) {
       >
         <div>
           <div className="flex items-center justify-between px-4 py-5">
-            <span className="text-xl font-semibold">Eventu</span>
+            <span className="text-xl font-semibold">Eventkt</span>
             <button
               type="button"
               onClick={onClose}

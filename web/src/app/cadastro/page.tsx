@@ -135,7 +135,7 @@ export default function CadastroPage() {
 
         {slug ? (
           <p className="-mt-2 text-xs text-ink-soft">
-            Sua página: <span className="font-medium text-ink">eventu.com/{slug}</span>
+            Sua página: <span className="font-medium text-ink">eventkt.com.br/{slug}</span>
           </p>
         ) : null}
 

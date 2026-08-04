@@ -21,7 +21,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
           >
             <Menu size={20} />
           </button>
-          <span className="text-lg font-semibold text-ink">Eventu</span>
+          <span className="text-lg font-semibold text-ink">Eventkt</span>
         </div>
 
         {children}

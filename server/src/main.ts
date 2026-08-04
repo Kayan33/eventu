@@ -26,8 +26,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Eventu API')
-    .setDescription('API para o projeto Eventu')
+    .setTitle('Eventkt API')
+    .setDescription('API para o projeto Eventkt')
     .setVersion('1.0')
     .build();
 

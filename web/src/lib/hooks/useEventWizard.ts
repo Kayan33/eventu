@@ -120,7 +120,7 @@ export function useEventWizard() {
   }, [tenantId]);
 
   const totalSteps = state.isFree || state.hasSavedPix ? 2 : 3;
-  const publicLink = state.eventSlug ? `eventu.com/${state.eventSlug}` : "";
+  const publicLink = state.eventSlug ? `eventkt.com.br/${state.eventSlug}` : "";
 
   function update(patch: Partial<WizardState>) {
     setState((s) => ({ ...s, ...patch }));
