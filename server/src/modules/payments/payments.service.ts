@@ -90,9 +90,12 @@ export class PaymentsService {
     clientId: string,
   ): Promise<Payment> {
     const payment = await this.findOne(id, { clientId });
-    if (payment.status !== PaymentStatus.PENDING) {
+    if (
+      payment.status !== PaymentStatus.PENDING &&
+      payment.status !== PaymentStatus.REJECTED
+    ) {
       throw new BadRequestException(
-        'Only pending payments can receive a receipt',
+        'Only pending or rejected payments can receive a receipt',
       );
     }
 
@@ -115,6 +118,7 @@ export class PaymentsService {
     );
     payment.uploadedAt = new Date();
     payment.status = PaymentStatus.UPLOADED;
+    payment.rejectionReason = undefined;
     return await this.paymentRepository.save(payment);
   }
 
