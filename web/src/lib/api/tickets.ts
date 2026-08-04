@@ -37,6 +37,7 @@ export interface TicketEntity {
         pixKey?: string;
         pixKeyType?: string;
         pixBeneficiary?: string;
+        pixQrCodeUrl?: string;
       };
     };
   };

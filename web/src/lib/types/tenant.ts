@@ -6,6 +6,7 @@ export interface TenantEntity {
   pixKey?: string;
   pixKeyType?: PixKeyType;
   pixBeneficiary?: string;
+  pixQrCodeUrl?: string;
 }
 
 export interface UpdateTenantPixPayload {

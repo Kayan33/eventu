@@ -7,7 +7,10 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TenantsService } from './tenants.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
@@ -68,5 +71,20 @@ export class TenantsController {
     @CurrentActor() actor: UserJwtPayload,
   ) {
     return this.tenantsService.remove(id, actor.tenantId);
+  }
+
+  @ActorType('user')
+  @Roles(UserRole.ADMIN)
+  @Post(':id/pix-qrcode')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({
+    summary: 'Upload the tenant PIX QR code image (admin only, own tenant)',
+  })
+  uploadPixQrCode(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentActor() actor: UserJwtPayload,
+  ) {
+    return this.tenantsService.uploadPixQrCode(id, file, actor.tenantId);
   }
 }

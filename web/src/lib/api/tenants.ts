@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, apiUpload } from "./client";
 import type {
   TenantEntity,
   UpdateTenantPayload,
@@ -18,4 +18,10 @@ export function updateTenantPix(
   payload: UpdateTenantPixPayload,
 ): Promise<TenantEntity> {
   return apiFetch<TenantEntity>(`/tenants/${id}`, { method: "PUT", body: payload });
+}
+
+export function uploadTenantPixQrCode(id: string, file: File): Promise<TenantEntity> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiUpload<TenantEntity>(`/tenants/${id}/pix-qrcode`, formData);
 }

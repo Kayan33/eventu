@@ -6,7 +6,7 @@ import {
   deleteTicketType,
   updateTicketType,
 } from "@/lib/api/ticketTypes";
-import { getTenant, updateTenantPix } from "@/lib/api/tenants";
+import { getTenant, updateTenantPix, uploadTenantPixQrCode } from "@/lib/api/tenants";
 import { translateApiError } from "@/lib/api/errorMessages";
 import type { PixKeyType } from "@/lib/types/tenant";
 import type { CapacityMode } from "@/lib/types/event";
@@ -48,6 +48,8 @@ interface WizardState {
   pixKeyType: PixKeyType;
   pixKey: string;
   pixBeneficiary: string;
+  pixQrCodeUrl?: string;
+  qrUploading: boolean;
   hasSavedPix: boolean;
 
   eventId: string | null;
@@ -87,6 +89,8 @@ function initialState(): WizardState {
     pixKeyType: "cpf",
     pixKey: "",
     pixBeneficiary: "",
+    pixQrCodeUrl: undefined,
+    qrUploading: false,
     hasSavedPix: false,
 
     eventId: null,
@@ -103,9 +107,12 @@ export function useEventWizard() {
     if (!tenantId) return;
     let cancelled = false;
     getTenant(tenantId).then((tenant) => {
-      if (!cancelled && tenant.pixKey && tenant.pixBeneficiary) {
-        setState((s) => ({ ...s, hasSavedPix: true }));
-      }
+      if (cancelled) return;
+      setState((s) => ({
+        ...s,
+        hasSavedPix: Boolean(tenant.pixKey && tenant.pixBeneficiary),
+        pixQrCodeUrl: tenant.pixQrCodeUrl,
+      }));
     });
     return () => {
       cancelled = true;
@@ -245,6 +252,21 @@ export function useEventWizard() {
     }
   }
 
+  async function uploadPixQrCode(file: File) {
+    if (!tenantId) return;
+    setState((s) => ({ ...s, qrUploading: true }));
+    try {
+      const tenant = await uploadTenantPixQrCode(tenantId, file);
+      setState((s) => ({ ...s, pixQrCodeUrl: tenant.pixQrCodeUrl, qrUploading: false }));
+    } catch (err) {
+      setState((s) => ({
+        ...s,
+        qrUploading: false,
+        error: translateApiError(err, "Não foi possível enviar o QR code."),
+      }));
+    }
+  }
+
   async function publishNow() {
     if (!state.eventId) return;
     setState((s) => ({ ...s, submitting: true, error: null }));
@@ -285,6 +307,7 @@ export function useEventWizard() {
     onBack,
     onCopyLink,
     onShareWhatsapp,
+    uploadPixQrCode,
     publishNow,
     isStepValid: isStepValid(),
     totalSteps,

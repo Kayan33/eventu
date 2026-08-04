@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
 import { PanelLayout } from "@/components/panel/PanelLayout";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
-import { getTenant, updateTenant } from "@/lib/api/tenants";
+import { getTenant, updateTenant, uploadTenantPixQrCode } from "@/lib/api/tenants";
 import { translateApiError } from "@/lib/api/errorMessages";
 import type { PixKeyType } from "@/lib/types/tenant";
 
@@ -29,6 +29,8 @@ export default function ConfiguracoesPage() {
   const [pixKeyType, setPixKeyType] = useState<PixKeyType>("cpf");
   const [pixKey, setPixKey] = useState("");
   const [pixBeneficiary, setPixBeneficiary] = useState("");
+  const [pixQrCodeUrl, setPixQrCodeUrl] = useState<string | undefined>(undefined);
+  const [qrUploading, setQrUploading] = useState(false);
 
   useEffect(() => {
     if (!ready || !actor) return;
@@ -38,10 +40,27 @@ export default function ConfiguracoesPage() {
         setPixKeyType(tenant.pixKeyType ?? "cpf");
         setPixKey(tenant.pixKey ?? "");
         setPixBeneficiary(tenant.pixBeneficiary ?? "");
+        setPixQrCodeUrl(tenant.pixQrCodeUrl);
       })
       .catch((err: unknown) => setError(translateApiError(err, "Não foi possível carregar os dados.")))
       .finally(() => setLoading(false));
   }, [ready, actor]);
+
+  async function handleQrCodeChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !actor) return;
+    setQrUploading(true);
+    setError(null);
+    try {
+      const tenant = await uploadTenantPixQrCode(actor.tenantId, file);
+      setPixQrCodeUrl(tenant.pixQrCodeUrl);
+    } catch (err) {
+      setError(translateApiError(err, "Não foi possível enviar o QR code."));
+    } finally {
+      setQrUploading(false);
+    }
+  }
 
   async function handleSave() {
     if (!actor) return;
@@ -95,6 +114,34 @@ export default function ConfiguracoesPage() {
                   value={pixBeneficiary}
                   onChange={(e) => setPixBeneficiary(e.target.value)}
                 />
+              </Field>
+            </div>
+
+            <div className="mt-3.5">
+              <Field
+                label="QR code do Pix"
+                htmlFor="pixQrCode"
+                hint="Opcional — mostrado pro cliente junto com a chave Pix na hora de pagar"
+              >
+                {pixQrCodeUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={pixQrCodeUrl}
+                    alt=""
+                    className="mb-2.5 h-40 w-40 rounded-md border border-divider object-contain"
+                  />
+                ) : null}
+                <div className="flex items-center gap-2.5">
+                  <input
+                    id="pixQrCode"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => void handleQrCodeChange(e)}
+                    disabled={qrUploading}
+                    className="text-sm text-ink-soft file:mr-3 file:h-9 file:rounded-md file:border file:border-divider file:bg-surface file:px-3.5 file:text-sm file:font-medium file:text-ink hover:file:border-accent-700"
+                  />
+                  {qrUploading ? <span className="text-xs text-ink-soft">Enviando…</span> : null}
+                </div>
               </Field>
             </div>
 
