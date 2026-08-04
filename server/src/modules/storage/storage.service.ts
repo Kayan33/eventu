@@ -1,9 +1,21 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
+
+export interface ReplaceFileOptions {
+  /** e.g. "Cover image", "Receipt", "QR code image" — used in validation errors */
+  subject: string;
+  idPrefix: string;
+  mimeExtensions: Record<string, string>;
+  /** e.g. "PNG, JPEG, WEBP or GIF" */
+  allowedLabel: string;
+  maxSizeBytes: number;
+  isPublic: boolean;
+}
 
 @Injectable()
 export class StorageService {
@@ -68,6 +80,37 @@ export class StorageService {
     }
 
     return data.signedUrl;
+  }
+
+  /**
+   * Validates and uploads a replacement file for a given bucket. Consolidates
+   * the validate → path → upload sequence shared by every "single file per
+   * record" upload (event cover, receipt, PIX QR code). Deleting the stale
+   * previous file is left to the caller, to run only after its own save
+   * succeeds — see deletePublicFileByUrl / deletePrivateFile.
+   */
+  async replaceFile(
+    bucket: string,
+    file: Express.Multer.File,
+    options: ReplaceFileOptions,
+  ): Promise<string> {
+    const extension = options.mimeExtensions[file.mimetype];
+    if (!extension) {
+      throw new BadRequestException(
+        `${options.subject} must be ${options.allowedLabel}`,
+      );
+    }
+    if (file.size > options.maxSizeBytes) {
+      const maxMb = Math.floor(options.maxSizeBytes / (1024 * 1024));
+      throw new BadRequestException(
+        `${options.subject} must be at most ${maxMb}MB`,
+      );
+    }
+
+    const path = `${options.idPrefix}-${Date.now()}.${extension}`;
+    return options.isPublic
+      ? await this.uploadPublicFile(bucket, path, file.buffer, file.mimetype)
+      : await this.uploadPrivateFile(bucket, path, file.buffer, file.mimetype);
   }
 
   async deletePublicFileByUrl(

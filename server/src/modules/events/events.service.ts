@@ -123,24 +123,19 @@ export class EventsService {
     tenantId: string,
   ): Promise<Event> {
     const event = await this.findOne(id, tenantId);
-
-    const extension = COVER_IMAGE_MIME_EXTENSIONS[file.mimetype];
-    if (!extension) {
-      throw new BadRequestException(
-        'Cover image must be PNG, JPEG, WEBP or GIF',
-      );
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      throw new BadRequestException('Cover image must be at most 5MB');
-    }
-
     const previousCoverUrl = event.coverImageUrl;
-    const path = `${event.id}-${Date.now()}.${extension}`;
-    event.coverImageUrl = await this.storageService.uploadPublicFile(
+
+    event.coverImageUrl = await this.storageService.replaceFile(
       COVER_IMAGE_BUCKET,
-      path,
-      file.buffer,
-      file.mimetype,
+      file,
+      {
+        subject: 'Cover image',
+        idPrefix: event.id,
+        mimeExtensions: COVER_IMAGE_MIME_EXTENSIONS,
+        allowedLabel: 'PNG, JPEG, WEBP or GIF',
+        maxSizeBytes: 5 * 1024 * 1024,
+        isPublic: true,
+      },
     );
     const saved = await this.eventRepository.save(event);
 

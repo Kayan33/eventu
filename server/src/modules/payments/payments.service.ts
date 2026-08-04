@@ -101,23 +101,20 @@ export class PaymentsService {
       );
     }
 
-    const extension = RECEIPT_MIME_EXTENSIONS[file.mimetype];
-    if (!extension) {
-      throw new BadRequestException('Receipt must be PNG, JPEG, WEBP or PDF');
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      throw new BadRequestException('Receipt must be at most 5MB');
-    }
-
     const previousPath = payment.pixReceiptUrl;
-    const path = `${payment.id}-${Date.now()}.${extension}`;
     // pixReceiptUrl holds a private bucket path here, not a public URL —
     // viewing it requires a signed URL, see getReceiptUrl().
-    payment.pixReceiptUrl = await this.storageService.uploadPrivateFile(
+    payment.pixReceiptUrl = await this.storageService.replaceFile(
       RECEIPT_BUCKET,
-      path,
-      file.buffer,
-      file.mimetype,
+      file,
+      {
+        subject: 'Receipt',
+        idPrefix: payment.id,
+        mimeExtensions: RECEIPT_MIME_EXTENSIONS,
+        allowedLabel: 'PNG, JPEG, WEBP or PDF',
+        maxSizeBytes: 5 * 1024 * 1024,
+        isPublic: false,
+      },
     );
     payment.uploadedAt = new Date();
     payment.status = PaymentStatus.UPLOADED;
