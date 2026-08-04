@@ -1,14 +1,16 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { hashPassword } from '../../common/utils/password.util';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @Injectable()
 export class UsersService {
@@ -70,6 +72,10 @@ export class UsersService {
       }
     }
 
+    if (dto.role && dto.role !== UserRole.ADMIN) {
+      await this.assertNotLastAdmin(user);
+    }
+
     const { password, ...rest } = dto;
     const passwordHash = password ? await hashPassword(password) : undefined;
 
@@ -78,7 +84,25 @@ export class UsersService {
   }
 
   async remove(id: string, tenantId?: string): Promise<void> {
-    await this.findOne(id, tenantId);
+    const user = await this.findOne(id, tenantId);
+    await this.assertNotLastAdmin(user);
     await this.userRepository.softDelete(id);
+  }
+
+  /** Throws if `user` is an admin and removing/demoting them would leave the tenant with none. */
+  private async assertNotLastAdmin(user: User): Promise<void> {
+    if (user.role !== UserRole.ADMIN) {
+      return;
+    }
+    const otherAdmins = await this.userRepository.count({
+      where: {
+        tenantId: user.tenantId,
+        role: UserRole.ADMIN,
+        id: Not(user.id),
+      },
+    });
+    if (otherAdmins === 0) {
+      throw new BadRequestException('Tenant must have at least one admin');
+    }
   }
 }
