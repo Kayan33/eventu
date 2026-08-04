@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Check, Copy } from "lucide-react";
 import { uploadReceipt } from "@/lib/api/payments";
 import { translateApiError } from "@/lib/api/errorMessages";
@@ -57,6 +58,12 @@ export function PaymentStep({ ticket }: PaymentStepProps) {
           Sua inscrição está confirmada. Código:{" "}
           <span className="font-medium text-ink">{ticket.code}</span>
         </p>
+        <Link
+          href="/minhas-inscricoes"
+          className="mt-4 inline-block text-sm font-medium text-accent-700 hover:underline"
+        >
+          Ver minhas inscrições →
+        </Link>
       </div>
     );
   }
@@ -68,6 +75,12 @@ export function PaymentStep({ ticket }: PaymentStepProps) {
         <p className="mt-1.5 text-sm text-ink-soft">
           A organização vai revisar seu pagamento em breve.
         </p>
+        <Link
+          href="/minhas-inscricoes"
+          className="mt-4 inline-block text-sm font-medium text-accent-700 hover:underline"
+        >
+          Ver minhas inscrições →
+        </Link>
       </div>
     );
   }

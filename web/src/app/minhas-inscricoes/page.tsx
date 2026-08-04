@@ -9,18 +9,24 @@ import { listTickets, type TicketEntity } from "@/lib/api/tickets";
 import { translateApiError } from "@/lib/api/errorMessages";
 import { formatDateRange } from "@/lib/utils/formatDate";
 
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  pending: { label: "Aguardando pagamento", className: "bg-bg text-ink-soft" },
-  uploaded: { label: "Em análise", className: "bg-accent-700/10 text-accent-700" },
-  approved: { label: "Aprovado", className: "bg-success/10 text-success" },
-  rejected: { label: "Rejeitado", className: "bg-danger/10 text-danger" },
+const STATUS_LABELS: Record<string, { label: string; className: string; action: string }> = {
+  pending: { label: "Aguardando pagamento", className: "bg-bg text-ink-soft", action: "Pagar agora" },
+  uploaded: { label: "Em análise", className: "bg-accent-700/10 text-accent-700", action: "Ver detalhes" },
+  approved: { label: "Aprovado", className: "bg-success/10 text-success", action: "Ver detalhes" },
+  rejected: { label: "Rejeitado", className: "bg-danger/10 text-danger", action: "Reenviar comprovante" },
 };
 
-function statusInfo(ticket: TicketEntity): { label: string; className: string } {
+function statusInfo(ticket: TicketEntity): { label: string; className: string; action: string } {
   if (ticket.payment) {
-    return STATUS_LABELS[ticket.payment.status] ?? { label: ticket.payment.status, className: "bg-bg text-ink-soft" };
+    return (
+      STATUS_LABELS[ticket.payment.status] ?? {
+        label: ticket.payment.status,
+        className: "bg-bg text-ink-soft",
+        action: "Ver detalhes",
+      }
+    );
   }
-  return { label: "Confirmado", className: "bg-success/10 text-success" };
+  return { label: "Confirmado", className: "bg-success/10 text-success", action: "Ver detalhes" };
 }
 
 export default function MinhasInscricoesPage() {
@@ -72,11 +78,8 @@ export default function MinhasInscricoesPage() {
             {tickets.map((ticket) => {
               const event = ticket.ticketType?.event;
               const status = statusInfo(ticket);
-              return (
-                <div
-                  key={ticket.id}
-                  className="overflow-hidden rounded-lg border border-divider bg-surface"
-                >
+              const content = (
+                <>
                   {event?.coverImageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={event.coverImageUrl} alt="" className="h-auto w-full" />
@@ -111,9 +114,32 @@ export default function MinhasInscricoesPage() {
 
                     <div className="flex items-center justify-between border-t border-divider pt-3.5">
                       <span className="text-lg font-semibold text-ink">R$ {ticket.finalPrice}</span>
+                      {event ? (
+                        <span className="text-[13px] font-medium text-accent-700">
+                          {status.action} →
+                        </span>
+                      ) : null}
                     </div>
                   </div>
-                </div>
+                </>
+              );
+
+              if (!event) {
+                return (
+                  <div key={ticket.id} className="overflow-hidden rounded-lg border border-divider bg-surface">
+                    {content}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={ticket.id}
+                  href={`/${event.slug}/inscricao`}
+                  className="overflow-hidden rounded-lg border border-divider bg-surface transition-colors hover:border-accent-700"
+                >
+                  {content}
+                </Link>
               );
             })}
           </div>

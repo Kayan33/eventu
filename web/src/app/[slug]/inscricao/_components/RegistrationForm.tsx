@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { createTicket, listTickets, type TicketEntity } from "@/lib/api/tickets";
 import { translateApiError } from "@/lib/api/errorMessages";
 import { Field } from "@/components/ui/Field";
@@ -97,6 +98,12 @@ export function RegistrationForm({ event }: RegistrationFormProps) {
           <p className="mt-1 text-sm text-ink-soft">
             Esse ingresso é gratuito — nenhum pagamento necessário.
           </p>
+          <Link
+            href="/minhas-inscricoes"
+            className="mt-4 inline-block text-sm font-medium text-accent-700 hover:underline"
+          >
+            Ver minhas inscrições →
+          </Link>
         </div>
       );
     }
