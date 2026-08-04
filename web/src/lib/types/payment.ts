@@ -34,5 +34,13 @@ export interface Payment {
         title: string;
       };
     };
+    formResponses?: {
+      id: string;
+      value: string;
+      formField?: {
+        id: string;
+        label: string;
+      };
+    }[];
   };
 }

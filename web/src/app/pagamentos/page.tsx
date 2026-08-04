@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
 import { PanelLayout } from "@/components/panel/PanelLayout";
 import { Tabs } from "@/components/panel/Tabs";
@@ -43,6 +43,7 @@ export default function PagamentosPage() {
   const [loadingReceiptId, setLoadingReceiptId] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<{ url: string; isPdf: boolean } | null>(null);
   const [receiptImageFailed, setReceiptImageFailed] = useState(false);
+  const [expandedFormId, setExpandedFormId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -154,15 +155,47 @@ export default function PagamentosPage() {
                   </div>
                 </div>
 
-                {payment.pixReceiptUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => void handleViewReceipt(payment)}
-                    disabled={loadingReceiptId === payment.id}
-                    className="mt-2.5 inline-block text-[13px] font-medium text-accent-700 hover:underline disabled:cursor-wait disabled:opacity-60"
-                  >
-                    {loadingReceiptId === payment.id ? "Abrindo…" : "Ver comprovante →"}
-                  </button>
+                <div className="mt-2.5 flex flex-wrap items-center gap-4">
+                  {payment.pixReceiptUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleViewReceipt(payment)}
+                      disabled={loadingReceiptId === payment.id}
+                      className="inline-block text-[13px] font-medium text-accent-700 hover:underline disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {loadingReceiptId === payment.id ? "Abrindo…" : "Ver comprovante →"}
+                    </button>
+                  ) : null}
+
+                  {payment.ticket?.formResponses?.length ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedFormId((id) => (id === payment.id ? null : payment.id))
+                      }
+                      className="inline-flex items-center gap-1 text-[13px] font-medium text-accent-700 hover:underline"
+                    >
+                      Ver respostas do formulário
+                      {expandedFormId === payment.id ? (
+                        <ChevronUp size={14} />
+                      ) : (
+                        <ChevronDown size={14} />
+                      )}
+                    </button>
+                  ) : null}
+                </div>
+
+                {expandedFormId === payment.id && payment.ticket?.formResponses?.length ? (
+                  <dl className="mt-2.5 flex flex-col gap-1.5 rounded-md border border-divider bg-bg p-3">
+                    {payment.ticket.formResponses.map((response) => (
+                      <div key={response.id}>
+                        <dt className="text-[11px] text-ink-soft">
+                          {response.formField?.label ?? "Pergunta removida"}
+                        </dt>
+                        <dd className="text-[13px] text-ink">{response.value || "—"}</dd>
+                      </div>
+                    ))}
+                  </dl>
                 ) : null}
 
                 {payment.status === PaymentStatus.REJECTED && payment.rejectionReason ? (

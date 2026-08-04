@@ -49,6 +49,8 @@ export class PaymentsService {
       .leftJoinAndSelect('ticket.client', 'client')
       .leftJoinAndSelect('ticket.ticketType', 'ticketType')
       .leftJoinAndSelect('ticketType.event', 'event')
+      .leftJoinAndSelect('ticket.formResponses', 'formResponses')
+      .leftJoinAndSelect('formResponses.formField', 'formField')
       .orderBy('payment.createdAt', 'DESC');
 
     if (status) {
