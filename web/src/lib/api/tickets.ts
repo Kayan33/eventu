@@ -31,6 +31,12 @@ export interface TicketEntity {
     event?: {
       id: string;
       title: string;
+      slug: string;
+      startDate: string;
+      endDate: string;
+      location?: string;
+      locationType?: string;
+      coverImageUrl?: string;
       tenant?: {
         id: string;
         name: string;
