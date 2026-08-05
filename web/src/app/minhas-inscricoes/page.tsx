@@ -15,6 +15,7 @@ const STATUS_LABELS: Record<string, { label: string; className: string; action: 
   uploaded: { label: "Em análise", className: "bg-accent-700/10 text-accent-700", action: "Ver detalhes" },
   approved: { label: "Aprovado", className: "bg-success/10 text-success", action: "Ver detalhes" },
   rejected: { label: "Rejeitado", className: "bg-danger/10 text-danger", action: "Reenviar comprovante" },
+  expired: { label: "Expirado", className: "bg-danger/10 text-danger", action: "Inscrever-se novamente" },
 };
 
 function statusInfo(ticket: TicketEntity): { label: string; className: string; action: string } {

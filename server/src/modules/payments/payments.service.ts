@@ -1,12 +1,15 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { Cron } from '@nestjs/schedule';
+import { DataSource, Repository } from 'typeorm';
 import { Payment } from './entities/payment.entity';
 import { Ticket } from '../tickets/entities/ticket.entity';
+import { TicketType } from '../ticket-types/entities/ticket-type.entity';
 import { PaymentStatus } from '../../common/enums/payment-status.enum';
 import { TicketStatus } from '../../common/enums/ticket-status.enum';
 import {
@@ -31,12 +34,15 @@ const RECEIPT_MIME_EXTENSIONS: Record<string, string> = {
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
+
   constructor(
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
     @InjectRepository(Ticket)
     private readonly ticketRepository: Repository<Ticket>,
     private readonly storageService: StorageService,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   async findByStatus(
@@ -168,5 +174,64 @@ export class PaymentsService {
     }
 
     return payment;
+  }
+
+  /**
+   * Auto-expires payments whose 24h window ran out without an approval —
+   * whether the client never uploaded a receipt (still PENDING) or had one
+   * rejected and never resubmitted (REJECTED). An UPLOADED receipt awaiting
+   * review is left alone: the client already acted in time, so a slow
+   * organizer shouldn't cost them the ticket.
+   */
+  @Cron('0 */15 * * * *')
+  async expireStalePayments(): Promise<void> {
+    const stale = await this.paymentRepository
+      .createQueryBuilder('payment')
+      .where('payment.status IN (:...statuses)', {
+        statuses: [PaymentStatus.PENDING, PaymentStatus.REJECTED],
+      })
+      .andWhere('payment.expiresAt < :now', { now: new Date() })
+      .getMany();
+
+    for (const stalePayment of stale) {
+      await this.dataSource.transaction(async (manager) => {
+        // Re-check inside the transaction in case an upload/review raced
+        // with this job between the query above and now.
+        const payment = await manager.findOne(Payment, {
+          where: { id: stalePayment.id },
+        });
+        if (
+          !payment ||
+          (payment.status !== PaymentStatus.PENDING &&
+            payment.status !== PaymentStatus.REJECTED)
+        ) {
+          return;
+        }
+        payment.status = PaymentStatus.EXPIRED;
+        await manager.save(payment);
+
+        const ticket = await manager.findOne(Ticket, {
+          where: { id: payment.ticketId },
+        });
+        if (!ticket || ticket.status !== TicketStatus.RESERVED) {
+          return;
+        }
+        ticket.status = TicketStatus.EXPIRED;
+        await manager.save(ticket);
+
+        const ticketType = await manager.findOne(TicketType, {
+          where: { id: ticket.ticketTypeId },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (ticketType && ticketType.sold > 0) {
+          ticketType.sold -= 1;
+          await manager.save(ticketType);
+        }
+      });
+    }
+
+    if (stale.length > 0) {
+      this.logger.log(`Expired ${stale.length} stale payment(s)`);
+    }
   }
 }

@@ -17,7 +17,7 @@ import { PaymentStatus } from '../../common/enums/payment-status.enum';
 import { CapacityMode } from '../../common/enums/capacity-mode.enum';
 import { generateCode } from '../../common/utils/random-code.util';
 
-const PAYMENT_EXPIRATION_MINUTES = 30;
+const PAYMENT_EXPIRATION_MINUTES = 24 * 60;
 
 export interface TicketScope {
   clientId?: string;

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { dataSourceOptions } from './database/typeorm.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from 'nestjs-pino';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { UsersModule } from './modules/users/users.module';
@@ -32,6 +33,7 @@ import { AuthModule } from './modules/auth/auth.module';
       ...dataSourceOptions,
       autoLoadEntities: true,
     }),
+    ScheduleModule.forRoot(),
     TenantsModule,
     UsersModule,
     ClientsModule,

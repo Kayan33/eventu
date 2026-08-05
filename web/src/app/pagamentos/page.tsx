@@ -18,6 +18,7 @@ const STATUS_OPTIONS: { value: PaymentStatus; label: string }[] = [
   { value: PaymentStatus.PENDING, label: "Pendentes" },
   { value: PaymentStatus.APPROVED, label: "Aprovados" },
   { value: PaymentStatus.REJECTED, label: "Rejeitados" },
+  { value: PaymentStatus.EXPIRED, label: "Expirados" },
 ];
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -150,7 +151,9 @@ export default function PagamentosPage() {
                         ? `Vence em ${formatDateTime(payment.expiresAt)}`
                         : payment.status === PaymentStatus.UPLOADED
                           ? `Enviado em ${formatDateTime(payment.uploadedAt)}`
-                          : `Revisado em ${formatDateTime(payment.reviewedAt)}`}
+                          : payment.status === PaymentStatus.EXPIRED
+                            ? `Expirou em ${formatDateTime(payment.expiresAt)}`
+                            : `Revisado em ${formatDateTime(payment.reviewedAt)}`}
                     </div>
                   </div>
                 </div>

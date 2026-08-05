@@ -3,6 +3,7 @@ export enum PaymentStatus {
   UPLOADED = "uploaded",
   APPROVED = "approved",
   REJECTED = "rejected",
+  EXPIRED = "expired",
 }
 
 export interface Payment {
