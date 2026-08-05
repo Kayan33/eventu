@@ -14,8 +14,9 @@ import { formatDateRange } from "@/lib/utils/formatDate";
 import { OverviewTab } from "./_components/OverviewTab";
 import { TicketsTab } from "./_components/TicketsTab";
 import { FormFieldsTab } from "./_components/FormFieldsTab";
+import { CredenciamentoTab } from "./_components/CredenciamentoTab";
 
-type TabValue = "overview" | "tickets" | "form";
+type TabValue = "overview" | "tickets" | "form" | "credenciamento";
 
 export default function EventDetailPage() {
   const { ready } = useRequireUser();
@@ -107,12 +108,14 @@ export default function EventDetailPage() {
             { value: "overview", label: "Visão geral" },
             { value: "tickets", label: "Ingressos" },
             { value: "form", label: "Formulário" },
+            { value: "credenciamento", label: "Credenciamento" },
           ]}
         />
 
         {tab === "overview" ? <OverviewTab detail={detail} /> : null}
         {tab === "tickets" ? <TicketsTab detail={detail} /> : null}
         {tab === "form" ? <FormFieldsTab detail={detail} /> : null}
+        {tab === "credenciamento" ? <CredenciamentoTab eventId={event.id} /> : null}
       </div>
 
       {confirmPublish && event.status === "draft" ? (

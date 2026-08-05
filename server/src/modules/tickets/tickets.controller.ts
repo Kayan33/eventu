@@ -49,7 +49,7 @@ export class TicketsController {
     return this.ticketsService.findAll(
       actor.type === 'client'
         ? { clientId: actor.sub, eventId }
-        : { tenantId: actor.tenantId },
+        : { tenantId: actor.tenantId, eventId },
     );
   }
 

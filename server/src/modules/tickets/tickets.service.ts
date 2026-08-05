@@ -92,7 +92,13 @@ export class TicketsService {
         clientId,
         code: generateCode('EVT'),
         finalPrice,
-        status: TicketStatus.RESERVED,
+        // Free tickets never get a Payment record, so there's nothing to
+        // confirm — they're valid immediately. Paid tickets stay reserved
+        // until the Pix receipt is approved (see PaymentsService.review()).
+        status:
+          Number(finalPrice) > 0
+            ? TicketStatus.RESERVED
+            : TicketStatus.CONFIRMED,
       });
       await manager.save(ticket);
 
@@ -148,12 +154,16 @@ export class TicketsService {
       });
     }
     if (scope.tenantId) {
-      return await this.ticketRepository
+      const qb = this.ticketRepository
         .createQueryBuilder('ticket')
-        .innerJoin('ticket.ticketType', 'ticketType')
-        .innerJoin('ticketType.event', 'event')
-        .where('event.tenantId = :tenantId', { tenantId: scope.tenantId })
-        .getMany();
+        .innerJoinAndSelect('ticket.ticketType', 'ticketType')
+        .innerJoinAndSelect('ticketType.event', 'event')
+        .leftJoinAndSelect('ticket.client', 'client')
+        .where('event.tenantId = :tenantId', { tenantId: scope.tenantId });
+      if (scope.eventId) {
+        qb.andWhere('event.id = :eventId', { eventId: scope.eventId });
+      }
+      return await qb.getMany();
     }
     return await this.ticketRepository.find();
   }
@@ -164,6 +174,7 @@ export class TicketsService {
       relations: {
         formResponses: true,
         payment: true,
+        client: true,
         ticketType: { event: { tenant: true } },
       },
     });

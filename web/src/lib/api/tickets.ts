@@ -17,6 +17,12 @@ export interface TicketEntity {
   code: string;
   finalPrice: string;
   status: string;
+  checkedInAt?: string;
+  client?: {
+    id: string;
+    name: string;
+    email: string;
+  };
   payment?: {
     id: string;
     amount: string;
@@ -56,4 +62,8 @@ export function createTicket(payload: CreateTicketPayload): Promise<TicketEntity
 export function listTickets(filters?: { eventId?: string }): Promise<TicketEntity[]> {
   const query = filters?.eventId ? `?eventId=${filters.eventId}` : "";
   return apiFetch<TicketEntity[]>(`/tickets${query}`);
+}
+
+export function checkInTicket(id: string): Promise<TicketEntity> {
+  return apiFetch<TicketEntity>(`/tickets/${id}/check-in`, { method: "PATCH" });
 }
