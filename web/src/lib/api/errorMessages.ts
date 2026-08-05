@@ -13,6 +13,10 @@ const KNOWN_MESSAGES: Record<string, string> = {
     "Já existe uma conta com esse CPF.",
   "Tenant must have at least one admin":
     "A organização precisa ter pelo menos um admin, não é possível remover ou rebaixar o único admin restante.",
+  "Event needs at least one ticket type to be published":
+    "Cadastre pelo menos um tipo de ingresso antes de publicar o evento.",
+  "A paid event needs an active Pix key to be published":
+    "Configure uma chave Pix ativa em Configurações antes de publicar um evento pago.",
 };
 
 export function translateApiError(err: unknown, fallback: string): string {

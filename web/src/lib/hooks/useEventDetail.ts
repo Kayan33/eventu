@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   getEvent,
   publishEvent,
@@ -6,6 +7,7 @@ import {
   uploadEventCover,
   type EventPayload,
 } from "@/lib/api/events";
+import { getTenant } from "@/lib/api/tenants";
 import {
   createTicketType,
   deleteTicketType,
@@ -110,6 +112,9 @@ function formFieldRowFromServer(f: EventFormField): FormFieldRow {
 }
 
 export function useEventDetail(eventId: string) {
+  const { actor } = useAuth();
+  const tenantId = actor?.type === "user" ? actor.tenantId : null;
+
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -118,6 +123,7 @@ export function useEventDetail(eventId: string) {
   const [formFields, setFormFields] = useState<FormFieldRow[]>([]);
   const [pricingRules, setPricingRules] = useState<Record<string, PricingRule[]>>({});
   const [pricingRulesLoading, setPricingRulesLoading] = useState<Record<string, boolean>>({});
+  const [hasSavedPix, setHasSavedPix] = useState(false);
 
   const [overview, setOverview] = useState({
     title: "",
@@ -176,6 +182,18 @@ export function useEventDetail(eventId: string) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!tenantId) return;
+    let cancelled = false;
+    getTenant(tenantId).then((tenant) => {
+      if (cancelled) return;
+      setHasSavedPix(Boolean(tenant.pixKey && tenant.pixBeneficiary));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId]);
 
   function updateOverview(patch: Partial<typeof overview>) {
     setOverview((o) => ({ ...o, ...patch }));
@@ -457,6 +475,14 @@ export function useEventDetail(eventId: string) {
     }
   }
 
+  const isPaidEvent = tickets.some((t) => Number(t.price) > 0);
+  const publishBlockedReason =
+    tickets.length === 0
+      ? "Cadastre pelo menos um tipo de ingresso antes de publicar."
+      : isPaidEvent && !hasSavedPix
+        ? "Configure uma chave Pix ativa em Configurações antes de publicar."
+        : null;
+
   return {
     loading,
     notFound,
@@ -471,6 +497,8 @@ export function useEventDetail(eventId: string) {
     uploadCover,
     publishing,
     publish,
+    hasSavedPix,
+    publishBlockedReason,
     tickets,
     addTicketRow,
     updateTicketRow,

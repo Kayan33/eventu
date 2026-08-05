@@ -70,6 +70,8 @@ export default function EventDetailPage() {
               type="button"
               onClick={() => void detail.publish()}
               loading={detail.publishing}
+              disabled={Boolean(detail.publishBlockedReason)}
+              title={detail.publishBlockedReason ?? undefined}
               className="px-4"
             >
               Publicar
@@ -80,7 +82,9 @@ export default function EventDetailPage() {
         <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-soft">
           <span>{formatDateRange(event.startDate, event.endDate)}</span>
           {event.status === "draft" ? (
-            <span>Página pública disponível após publicar</span>
+            <span>
+              {detail.publishBlockedReason ?? "Página pública disponível após publicar"}
+            </span>
           ) : (
             <a
               href={`/${event.slug}`}

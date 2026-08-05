@@ -6,15 +6,17 @@ import { useRequireUser } from "@/lib/hooks/useRequireUser";
 import { PanelLayout } from "@/components/panel/PanelLayout";
 import { EventCard } from "@/components/panel/EventCard";
 import { listEvents, publishEvent } from "@/lib/api/events";
+import { getTenant } from "@/lib/api/tenants";
 import { translateApiError } from "@/lib/api/errorMessages";
 import type { EventEntity } from "@/lib/types/event";
 
 export default function EventosPage() {
-  const { ready } = useRequireUser();
+  const { ready, actor } = useRequireUser();
   const [events, setEvents] = useState<EventEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasSavedPix, setHasSavedPix] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -32,6 +34,18 @@ export default function EventosPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (ready) void load();
   }, [ready, load]);
+
+  useEffect(() => {
+    if (!actor) return;
+    let cancelled = false;
+    getTenant(actor.tenantId).then((tenant) => {
+      if (cancelled) return;
+      setHasSavedPix(Boolean(tenant.pixKey && tenant.pixBeneficiary));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [actor]);
 
   async function handlePublish(id: string) {
     setPublishingId(id);
@@ -62,6 +76,17 @@ export default function EventosPage() {
         </div>
 
         {error ? <p className="mb-4 text-sm text-danger">{error}</p> : null}
+
+        {!hasSavedPix ? (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-md border border-divider bg-surface px-4 py-3 text-sm">
+            <span className="text-ink-soft">
+              Configure sua chave Pix pra conseguir publicar eventos pagos.
+            </span>
+            <Link href="/configuracoes" className="font-medium text-accent-700 hover:underline">
+              Ir para Configurações →
+            </Link>
+          </div>
+        ) : null}
 
         {loading ? (
           <p className="text-sm text-ink-soft">Carregando…</p>
