@@ -41,11 +41,22 @@ export default function CadastroPage() {
     }
 
     setSubmitting(true);
+    let actor;
     try {
-      const actor = await register({ tenantName: orgName, name, email, password });
-      router.push(await resolvePostAuthDestination(actor));
+      actor = await register({ tenantName: orgName, name, email, password });
     } catch (err) {
       setError(translateApiError(err, "Não foi possível criar sua conta."));
+      setSubmitting(false);
+      return;
+    }
+
+    // Account already exists at this point — a failure here (e.g. the
+    // session cookie not landing yet) shouldn't be reported as a failed
+    // sign-up, so it gets its own try/catch with a safe fallback route.
+    try {
+      router.push(await resolvePostAuthDestination(actor));
+    } catch {
+      router.push("/");
     } finally {
       setSubmitting(false);
     }

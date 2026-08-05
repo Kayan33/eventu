@@ -26,11 +26,22 @@ export default function LoginPage() {
     event.preventDefault();
     setError(null);
     setSubmitting(true);
+    let actor;
     try {
-      const actor = await login({ email, password });
-      router.push(await resolvePostAuthDestination(actor));
+      actor = await login({ email, password });
     } catch (err) {
       setError(translateApiError(err, "Não foi possível entrar."));
+      setSubmitting(false);
+      return;
+    }
+
+    // Login already succeeded at this point — a failure here shouldn't be
+    // reported as a failed login, so it gets its own try/catch with a safe
+    // fallback route.
+    try {
+      router.push(await resolvePostAuthDestination(actor));
+    } catch {
+      router.push("/");
     } finally {
       setSubmitting(false);
     }
