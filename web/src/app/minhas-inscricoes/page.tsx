@@ -8,7 +8,7 @@ import { ClientPanelLayout } from "@/components/client-panel/ClientPanelLayout";
 import { ClientLoginForm } from "@/components/client-panel/ClientLoginForm";
 import { listTickets, type TicketEntity } from "@/lib/api/tickets";
 import { translateApiError } from "@/lib/api/errorMessages";
-import { formatDateRange } from "@/lib/utils/formatDate";
+import { formatDateRange, formatTimeRemaining } from "@/lib/utils/formatDate";
 
 const STATUS_LABELS: Record<string, { label: string; className: string; action: string }> = {
   pending: { label: "Aguardando pagamento", className: "bg-bg text-ink-soft", action: "Pagar agora" },
@@ -29,6 +29,14 @@ function statusInfo(ticket: TicketEntity): { label: string; className: string; a
     );
   }
   return { label: "Confirmado", className: "bg-success/10 text-success", action: "Ver detalhes" };
+}
+
+function timeRemaining(ticket: TicketEntity): string | null {
+  const payment = ticket.payment;
+  if (!payment || (payment.status !== "pending" && payment.status !== "rejected")) {
+    return null;
+  }
+  return formatTimeRemaining(payment.expiresAt);
 }
 
 export default function MinhasInscricoesPage() {
@@ -104,6 +112,12 @@ export default function MinhasInscricoesPage() {
                       <div className="mt-1 text-[13px] text-ink-soft">
                         {ticket.ticketType?.name} · Código {ticket.code}
                       </div>
+
+                      {timeRemaining(ticket) ? (
+                        <div className="mt-1 text-[13px] font-medium text-danger">
+                          {timeRemaining(ticket)}
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="flex items-center justify-between border-t border-divider pt-3.5">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Copy } from "lucide-react";
 import { uploadReceipt } from "@/lib/api/payments";
 import { translateApiError } from "@/lib/api/errorMessages";
+import { formatTimeRemaining } from "@/lib/utils/formatDate";
 import { Button } from "@/components/ui/Button";
 import type { TicketEntity } from "@/lib/api/tickets";
 
@@ -103,6 +104,11 @@ export function PaymentStep({ ticket }: PaymentStepProps) {
       <div className="mt-4 rounded-md border border-divider bg-bg p-4">
         <p className="text-center text-xs text-ink-soft">Valor a pagar</p>
         <p className="text-center text-2xl font-semibold text-ink">R$ {payment?.amount}</p>
+        {payment?.expiresAt && formatTimeRemaining(payment.expiresAt) ? (
+          <p className="mt-1 text-center text-xs font-medium text-danger">
+            {formatTimeRemaining(payment.expiresAt)}
+          </p>
+        ) : null}
 
         {tenant?.pixQrCodeUrl ? (
           <div className="mt-4 flex flex-col items-center">
