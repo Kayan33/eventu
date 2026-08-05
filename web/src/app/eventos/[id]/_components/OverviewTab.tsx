@@ -19,6 +19,7 @@ export function OverviewTab({ detail }: { detail: Detail }) {
     uploadCover,
   } = detail;
   const isTotal = overview.capacityMode === "total";
+  const isDraft = event?.status === "draft";
 
   function handleCoverChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -53,10 +54,19 @@ export function OverviewTab({ detail }: { detail: Detail }) {
       </Field>
 
       <div className="mt-4">
-        <Field label="Nome do evento" htmlFor="ovTitle">
+        <Field
+          label="Nome do evento"
+          htmlFor="ovTitle"
+          hint={
+            !isDraft
+              ? "Não é possível mudar o nome (e a URL) depois que o evento é publicado."
+              : undefined
+          }
+        >
           <Input
             id="ovTitle"
             value={overview.title}
+            disabled={!isDraft}
             onChange={(e) => updateOverview({ title: e.target.value })}
           />
         </Field>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AuthLayout } from "@/components/auth/AuthLayout";
@@ -10,7 +10,6 @@ import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Button } from "@/components/ui/Button";
 import { PasswordStrengthMeter } from "@/components/ui/PasswordStrengthMeter";
 import { usePasswordStrength } from "@/lib/hooks/usePasswordStrength";
-import { slugify } from "@/lib/utils/slugify";
 import { useAuth } from "@/contexts/AuthContext";
 import { translateApiError } from "@/lib/api/errorMessages";
 import { resolvePostAuthDestination } from "@/lib/api/events";
@@ -28,7 +27,6 @@ export default function CadastroPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const strength = usePasswordStrength(password);
-  const slug = useMemo(() => slugify(orgName), [orgName]);
   const showMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   async function onSubmit(event: FormEvent) {
@@ -143,12 +141,6 @@ export default function CadastroPage() {
             onChange={(e) => setOrgName(e.target.value)}
           />
         </Field>
-
-        {slug ? (
-          <p className="-mt-2 text-xs text-ink-soft">
-            Sua página: <span className="font-medium text-ink">eventkt.com.br/{slug}</span>
-          </p>
-        ) : null}
 
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 

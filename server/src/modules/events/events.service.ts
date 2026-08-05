@@ -99,6 +99,20 @@ export class EventsService {
   ): Promise<Event> {
     const event = await this.findOne(id, tenantId);
 
+    if (dto.title !== undefined && dto.title !== event.title) {
+      if (event.status !== EventStatus.DRAFT) {
+        throw new BadRequestException(
+          'Cannot change the title of a published event',
+        );
+      }
+      const slug = slugify(dto.title);
+      const existing = await this.eventRepository.findOne({ where: { slug } });
+      if (existing && existing.id !== event.id) {
+        throw new ConflictException('Event with this title already exists');
+      }
+      event.slug = slug;
+    }
+
     const { startDate, endDate, capacityMode, totalCapacity, ...rest } = dto;
     const nextCapacityMode = capacityMode ?? event.capacityMode;
     const nextTotalCapacity = totalCapacity ?? event.totalCapacity;

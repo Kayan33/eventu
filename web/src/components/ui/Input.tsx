@@ -10,6 +10,7 @@ export function inputBaseClasses(invalid: boolean | undefined, className?: strin
     "h-10 w-full rounded-md border bg-surface px-3 text-sm text-ink outline-none transition-colors",
     "placeholder:text-ink-soft/60",
     "focus:border-accent-700 focus:ring-1 focus:ring-accent-700",
+    "disabled:cursor-not-allowed disabled:opacity-60",
     invalid ? "border-danger" : "border-divider",
     className,
   );

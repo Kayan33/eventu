@@ -22,6 +22,7 @@ export default function EventDetailPage() {
   const params = useParams<{ id: string }>();
   const detail = useEventDetail(params.id);
   const [tab, setTab] = useState<TabValue>("overview");
+  const [confirmPublish, setConfirmPublish] = useState(false);
 
   if (!ready) return null;
 
@@ -68,7 +69,7 @@ export default function EventDetailPage() {
           {event.status === "draft" ? (
             <Button
               type="button"
-              onClick={() => void detail.publish()}
+              onClick={() => setConfirmPublish(true)}
               loading={detail.publishing}
               disabled={Boolean(detail.publishBlockedReason)}
               title={detail.publishBlockedReason ?? undefined}
@@ -113,6 +114,39 @@ export default function EventDetailPage() {
         {tab === "tickets" ? <TicketsTab detail={detail} /> : null}
         {tab === "form" ? <FormFieldsTab detail={detail} /> : null}
       </div>
+
+      {confirmPublish && event.status === "draft" ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-[420px] rounded-md border border-divider bg-surface p-6">
+            <h2 className="mb-2 text-lg font-semibold text-ink">Publicar evento</h2>
+            <p className="mb-5 text-sm text-ink-soft">
+              Depois de publicado, o <strong>nome e a URL do evento não poderão mais ser
+              alterados</strong>. Confira se está tudo certo antes de continuar.
+            </p>
+
+            {detail.error ? <p className="mb-4 text-sm text-danger">{detail.error}</p> : null}
+
+            <div className="flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setConfirmPublish(false)}
+                disabled={detail.publishing}
+                className="h-10 rounded-md border border-divider bg-surface px-4 text-sm font-medium text-ink hover:border-accent-700 hover:text-accent-700 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <Button
+                type="button"
+                onClick={() => void detail.publish()}
+                loading={detail.publishing}
+                className="px-4"
+              >
+                Publicar
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </PanelLayout>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { createEvent } from "@/lib/api/events";
 import { translateApiError } from "@/lib/api/errorMessages";
+import { slugify } from "@/lib/utils/slugify";
 import { WizardShell } from "@/components/wizard/WizardShell";
 import { Field } from "@/components/ui/Field";
 import { Input, inputBaseClasses } from "@/components/ui/Input";
@@ -43,6 +44,7 @@ export default function NewEventPage() {
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const slug = useMemo(() => slugify(form.title), [form.title]);
 
   const isAdmin = actor?.type === "user" && actor.role === "admin";
 
@@ -106,6 +108,12 @@ export default function NewEventPage() {
             onChange={(e) => update({ title: e.target.value })}
           />
         </Field>
+
+        {slug ? (
+          <p className="-mt-2 text-xs text-ink-soft">
+            Página do evento: <span className="font-medium text-ink">eventkt.com.br/{slug}</span>
+          </p>
+        ) : null}
 
         <div className="grid grid-cols-2 gap-3.5">
           <Field label="Data de início" htmlFor="startDate">

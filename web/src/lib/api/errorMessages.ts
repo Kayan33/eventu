@@ -17,6 +17,8 @@ const KNOWN_MESSAGES: Record<string, string> = {
     "Cadastre pelo menos um tipo de ingresso antes de publicar o evento.",
   "A paid event needs an active Pix key to be published":
     "Configure uma chave Pix ativa em Configurações antes de publicar um evento pago.",
+  "Cannot change the title of a published event":
+    "Não é possível mudar o nome de um evento já publicado.",
 };
 
 export function translateApiError(err: unknown, fallback: string): string {
