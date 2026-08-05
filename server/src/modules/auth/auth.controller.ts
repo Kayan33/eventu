@@ -22,10 +22,11 @@ export class AuthController {
     res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
       httpOnly: true,
       secure: isProduction,
-      // Cross-site cookies (frontend and backend on different domains in
-      // production) require SameSite=None, which browsers only honor when
-      // paired with Secure. Locally, front/back share "localhost" so Lax works.
-      sameSite: isProduction ? 'none' : 'lax',
+      // Frontend and API are both under eventkt.com.br (app on the root/www,
+      // API on api.), so the cookie is first-party and Lax is enough — no
+      // need for SameSite=None, which browsers treat much more strictly
+      // (blocked outright in private/incognito tabs and in-app browsers).
+      sameSite: 'lax',
       maxAge: ACCESS_TOKEN_COOKIE_MAX_AGE_MS,
       path: '/',
     });
@@ -77,7 +78,7 @@ export class AuthController {
     res.clearCookie(ACCESS_TOKEN_COOKIE, {
       path: '/',
       secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      sameSite: 'lax',
     });
     return { success: true };
   }
