@@ -13,6 +13,7 @@ import { EventStatus } from '../../common/enums/event-status.enum';
 import { CapacityMode } from '../../common/enums/capacity-mode.enum';
 import { slugify } from '../../common/utils/slugify.util';
 import { StorageService } from '../storage/storage.service';
+import { TenantsService } from '../tenants/tenants.service';
 
 const COVER_IMAGE_BUCKET = 'event-covers';
 const COVER_IMAGE_MIME_EXTENSIONS: Record<string, string> = {
@@ -28,6 +29,7 @@ export class EventsService {
     @InjectRepository(Event)
     private readonly eventRepository: Repository<Event>,
     private readonly storageService: StorageService,
+    private readonly tenantsService: TenantsService,
   ) {}
 
   async create(dto: CreateEventDto, tenantId: string): Promise<Event> {
@@ -172,6 +174,15 @@ export class EventsService {
       throw new BadRequestException(
         'Event needs at least one ticket type to be published',
       );
+    }
+    const isPaid = event.ticketTypes.some((t) => Number(t.basePrice) > 0);
+    if (isPaid) {
+      const tenant = await this.tenantsService.findOne(tenantId);
+      if (!tenant.pixKey || !tenant.pixBeneficiary) {
+        throw new BadRequestException(
+          'A paid event needs an active Pix key to be published',
+        );
+      }
     }
     event.status = EventStatus.PUBLISHED;
     return await this.eventRepository.save(event);
