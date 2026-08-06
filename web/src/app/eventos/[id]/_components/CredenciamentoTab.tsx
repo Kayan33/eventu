@@ -7,6 +7,15 @@ import { listTickets, checkInTicket, type TicketEntity } from "@/lib/api/tickets
 import { translateApiError } from "@/lib/api/errorMessages";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Tabs } from "@/components/panel/Tabs";
+
+type StatusFilter = "pending" | "checked_in" | "all";
+
+const EMPTY_STATE_LABEL: Record<StatusFilter, string> = {
+  pending: "Ninguém aguardando entrada no momento.",
+  checked_in: "Ainda ninguém foi credenciado.",
+  all: "Nenhum participante encontrado.",
+};
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
   reserved: { label: "Aguardando pagamento", className: "bg-neutral-bar text-ink-soft" },
@@ -30,6 +39,8 @@ export function CredenciamentoTab({ eventId }: { eventId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("pending");
+  const [ticketTypeFilter, setTicketTypeFilter] = useState<string>("all");
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -65,27 +76,67 @@ export function CredenciamentoTab({ eventId }: { eventId: string }) {
     () => tickets.filter((t) => t.status !== "cancelled" && t.status !== "expired"),
     [tickets],
   );
+  const pendingCount = relevant.filter((t) => t.status === "confirmed").length;
   const checkedInCount = relevant.filter((t) => t.status === "used").length;
+
+  const statusFilterOptions: { value: StatusFilter; label: string }[] = [
+    { value: "pending", label: `Aguardando entrada (${pendingCount})` },
+    { value: "checked_in", label: `Credenciados (${checkedInCount})` },
+    { value: "all", label: `Todos (${tickets.length})` },
+  ];
+
+  const ticketTypeOptions = useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const t of tickets) {
+      if (t.ticketType) byId.set(t.ticketType.id, t.ticketType.name);
+    }
+    return Array.from(byId, ([id, name]) => ({ id, name }));
+  }, [tickets]);
+
   const filtered = useMemo(
-    () => tickets.filter((t) => matchesSearch(t, search)),
-    [tickets, search],
+    () =>
+      tickets.filter((t) => {
+        if (statusFilter === "pending" && t.status !== "confirmed") return false;
+        if (statusFilter === "checked_in" && t.status !== "used") return false;
+        if (ticketTypeFilter !== "all" && t.ticketTypeId !== ticketTypeFilter) return false;
+        return matchesSearch(t, search);
+      }),
+    [tickets, search, statusFilter, ticketTypeFilter],
   );
 
   return (
     <div className="rounded-md border border-divider bg-surface p-4 sm:p-6">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm font-medium text-ink">
-          {checkedInCount} de {relevant.length} credenciados
-        </p>
-        <div className="relative">
+      <p className="mb-4 text-sm text-ink-soft">
+        <span className="font-medium text-ink">{checkedInCount}</span> de{" "}
+        <span className="font-medium text-ink">{relevant.length}</span> credenciados
+      </p>
+
+      <Tabs value={statusFilter} onChange={setStatusFilter} items={statusFilterOptions} />
+
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1 sm:max-w-72">
           <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
           <Input
             placeholder="Buscar por nome, email ou código"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 sm:w-72"
+            className="w-full pl-9"
           />
         </div>
+        {ticketTypeOptions.length > 1 ? (
+          <select
+            value={ticketTypeFilter}
+            onChange={(e) => setTicketTypeFilter(e.target.value)}
+            className="h-10 rounded-md border border-divider bg-surface px-3 text-sm text-ink outline-none focus:border-accent-700 focus:ring-1 focus:ring-accent-700"
+          >
+            <option value="all">Todos os tipos de ingresso</option>
+            {ticketTypeOptions.map((tt) => (
+              <option key={tt.id} value={tt.id}>
+                {tt.name}
+              </option>
+            ))}
+          </select>
+        ) : null}
       </div>
 
       {error ? <p className="mb-4 text-sm text-danger">{error}</p> : null}
@@ -94,7 +145,7 @@ export function CredenciamentoTab({ eventId }: { eventId: string }) {
         <p className="text-sm text-ink-soft">Carregando…</p>
       ) : filtered.length === 0 ? (
         <p className="text-sm text-ink-soft">
-          {tickets.length === 0 ? "Ainda não tem nenhum ingresso vendido." : "Nenhum participante encontrado."}
+          {tickets.length === 0 ? "Ainda não tem nenhum ingresso vendido." : EMPTY_STATE_LABEL[statusFilter]}
         </p>
       ) : (
         <div className="flex flex-col gap-2.5">
