@@ -15,6 +15,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { CertificatesModule } from './modules/certificates/certificates.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { AuthModule } from './modules/auth/auth.module';
     PaymentsModule,
     CertificatesModule,
     AuthModule,
+    CronModule,
   ],
 })
 export class AppModule {}

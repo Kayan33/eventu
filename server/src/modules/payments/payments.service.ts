@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { Cron } from '@nestjs/schedule';
 import { DataSource, Repository } from 'typeorm';
 import { Payment } from './entities/payment.entity';
 import { Ticket } from '../tickets/entities/ticket.entity';
@@ -182,8 +181,10 @@ export class PaymentsService {
    * rejected and never resubmitted (REJECTED). An UPLOADED receipt awaiting
    * review is left alone: the client already acted in time, so a slow
    * organizer shouldn't cost them the ticket.
+   *
+   * Called on a schedule by CronService (see src/cron) — kept as a plain
+   * method here so the scheduling concern stays out of the domain service.
    */
-  @Cron('0 */15 * * * *')
   async expireStalePayments(): Promise<void> {
     const stale = await this.paymentRepository
       .createQueryBuilder('payment')
