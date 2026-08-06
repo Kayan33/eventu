@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Search, Check } from "lucide-react";
+import { Search, Check, QrCode } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { listTickets, checkInTicket, type TicketEntity } from "@/lib/api/tickets";
 import { translateApiError } from "@/lib/api/errorMessages";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/panel/Tabs";
+import { QrScannerModal, type ScanOutcome } from "./QrScannerModal";
 
 type StatusFilter = "pending" | "checked_in" | "all";
 
@@ -42,6 +43,7 @@ export function CredenciamentoTab({ eventId }: { eventId: string }) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("pending");
   const [ticketTypeFilter, setTicketTypeFilter] = useState<string>("all");
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,6 +71,20 @@ export function CredenciamentoTab({ eventId }: { eventId: string }) {
       setError(translateApiError(err, "Não foi possível confirmar a entrada."));
     } finally {
       setCheckingInId(null);
+    }
+  }
+
+  async function handleScan(ticketId: string): Promise<ScanOutcome> {
+    try {
+      const updated = await checkInTicket(ticketId);
+      setTickets((rows) =>
+        rows.some((t) => t.id === ticketId)
+          ? rows.map((t) => (t.id === ticketId ? updated : t))
+          : [...rows, updated],
+      );
+      return { ok: true, message: `${updated.client?.name ?? "Participante"} credenciado!` };
+    } catch (err) {
+      return { ok: false, message: translateApiError(err, "Não foi possível confirmar a entrada.") };
     }
   }
 
@@ -123,6 +139,16 @@ export function CredenciamentoTab({ eventId }: { eventId: string }) {
             className="w-full pl-9"
           />
         </div>
+        {canCheckIn ? (
+          <button
+            type="button"
+            onClick={() => setShowScanner(true)}
+            className="flex h-10 items-center gap-1.5 rounded-md border border-divider bg-surface px-3.5 text-sm font-medium text-ink hover:border-accent-700 hover:text-accent-700"
+          >
+            <QrCode size={16} />
+            Escanear QR code
+          </button>
+        ) : null}
         {ticketTypeOptions.length > 1 ? (
           <select
             value={ticketTypeFilter}
@@ -197,6 +223,10 @@ export function CredenciamentoTab({ eventId }: { eventId: string }) {
           })}
         </div>
       )}
+
+      {showScanner ? (
+        <QrScannerModal onScan={handleScan} onClose={() => setShowScanner(false)} />
+      ) : null}
     </div>
   );
 }

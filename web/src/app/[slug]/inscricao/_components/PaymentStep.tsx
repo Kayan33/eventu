@@ -7,6 +7,7 @@ import { uploadReceipt } from "@/lib/api/payments";
 import { translateApiError } from "@/lib/api/errorMessages";
 import { formatTimeRemaining } from "@/lib/utils/formatDate";
 import { Button } from "@/components/ui/Button";
+import { TicketQrCode } from "@/components/tickets/TicketQrCode";
 import type { TicketEntity } from "@/lib/api/tickets";
 
 const PIX_KEY_TYPE_LABELS: Record<string, string> = {
@@ -59,6 +60,9 @@ export function PaymentStep({ ticket }: PaymentStepProps) {
           Sua inscrição está confirmada. Código:{" "}
           <span className="font-medium text-ink">{ticket.code}</span>
         </p>
+        <div className="mt-4">
+          <TicketQrCode ticketId={ticket.id} />
+        </div>
         <Link
           href="/minhas-inscricoes"
           className="mt-4 inline-block text-sm font-medium text-accent-700 hover:underline"

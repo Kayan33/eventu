@@ -19,6 +19,9 @@ const KNOWN_MESSAGES: Record<string, string> = {
     "Configure uma chave Pix ativa em Configurações antes de publicar um evento pago.",
   "Cannot change the title of a published event":
     "Não é possível mudar o nome de um evento já publicado.",
+  "Ticket not found": "Ingresso não encontrado.",
+  "Only confirmed tickets can be checked in":
+    "Só ingressos confirmados podem ser credenciados.",
 };
 
 export function translateApiError(err: unknown, fallback: string): string {

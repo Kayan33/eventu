@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/Field";
 import { Input, inputBaseClasses } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { FormFieldType } from "@/lib/types/formField";
+import { TicketQrCode } from "@/components/tickets/TicketQrCode";
 import { PaymentStep } from "./PaymentStep";
 import type { EventEntity } from "@/lib/types/event";
 import type { TicketType } from "@/lib/types/ticketType";
@@ -98,6 +99,9 @@ export function RegistrationForm({ event }: RegistrationFormProps) {
           <p className="mt-1 text-sm text-ink-soft">
             Esse ingresso é gratuito — nenhum pagamento necessário.
           </p>
+          <div className="mt-4">
+            <TicketQrCode ticketId={ticket.id} />
+          </div>
           <Link
             href="/minhas-inscricoes"
             className="mt-4 inline-block text-sm font-medium text-accent-700 hover:underline"
