@@ -17,7 +17,7 @@ export const dataSourceOptions: DataSourceOptions = {
       }),
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   synchronize: process.env.NODE_ENV !== 'production',
-  logging: true,
+  logging: ['error'],
   namingStrategy: new SnakeNamingStrategy(),
   entities: [__dirname + '/../modules/**/*.entity.{ts,js}'],
   migrations: [__dirname + '/migrations/*.{ts,js}'],
