@@ -14,7 +14,7 @@ import { formatDateRange } from "@/lib/utils/formatDate";
 import { OverviewTab } from "./_components/OverviewTab";
 import { TicketsTab } from "./_components/TicketsTab";
 import { FormFieldsTab } from "./_components/FormFieldsTab";
-import { CredenciamentoTab } from "./_components/CredenciamentoTab";
+import { CredenciamentoTab } from "@/components/credenciamento/CredenciamentoTab";
 
 type TabValue = "overview" | "tickets" | "form" | "credenciamento";
 
