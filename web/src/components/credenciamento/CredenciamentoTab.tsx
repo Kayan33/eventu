@@ -32,6 +32,7 @@ function matchesSearch(ticket: TicketEntity, term: string): boolean {
   return haystack.includes(term.toLowerCase());
 }
 
+
 export function CredenciamentoTab({ eventId }: { eventId: string }) {
   const { actor } = useAuth();
   const canCheckIn = actor?.type === "user" && (actor.role === "admin" || actor.role === "editor");
@@ -82,7 +83,12 @@ export function CredenciamentoTab({ eventId }: { eventId: string }) {
           ? rows.map((t) => (t.id === ticketId ? updated : t))
           : [...rows, updated],
       );
-      return { ok: true, message: `${updated.client?.name ?? "Participante"} credenciado!` };
+      return {
+        ok: true,
+        message: "Entrada confirmada",
+        name: updated.client?.name ?? "Participante",
+        subtitle: updated.client?.email,
+      };
     } catch (err) {
       return { ok: false, message: translateApiError(err, "Não foi possível confirmar a entrada.") };
     }

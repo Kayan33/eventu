@@ -23,6 +23,14 @@ export interface TicketEntity {
     name: string;
     email: string;
   };
+  formResponses?: {
+    id: string;
+    value: string;
+    formField?: {
+      id: string;
+      label: string;
+    };
+  }[];
   payment?: {
     id: string;
     amount: string;

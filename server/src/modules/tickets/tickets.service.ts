@@ -172,7 +172,7 @@ export class TicketsService {
     const ticket = await this.ticketRepository.findOne({
       where: { id },
       relations: {
-        formResponses: true,
+        formResponses: { formField: true },
         payment: true,
         client: true,
         ticketType: { event: { tenant: true } },
