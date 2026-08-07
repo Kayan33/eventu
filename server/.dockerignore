@@ -1,0 +1,9 @@
+node_modules
+dist
+postgres-data
+.env
+.env.*
+.git
+*.log
+Dockerfile
+.dockerignore
