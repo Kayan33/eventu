@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X } from "lucide-react";
+import { AlertTriangle, Check, X } from "lucide-react";
 import { Scanner, type IDetectedBarcode } from "@yudiel/react-qr-scanner";
 
+export type ScanStatus = "success" | "warning" | "error";
+
 export interface ScanOutcome {
-  ok: boolean;
+  status: ScanStatus;
   message: string;
-  /** Participant's name — shown big, only rendered when `ok` is true. */
+  /** Participant's name — shown big, only rendered when `status` is "success". */
   name?: string;
-  /** Secondary line under the name, e.g. "Faculdade de Engenharia · Ciência da Computação". */
+  /** Secondary line under the name, e.g. the participant's email. */
   subtitle?: string;
 }
 
@@ -22,7 +24,7 @@ interface QrScannerModalProps {
   onClose: () => void;
 }
 
-/** How long the result card stays up before the scanner resumes. */
+/** How long the result card stays up before the scanner resumes — same for every outcome. */
 const FEEDBACK_DURATION_MS = 5000;
 
 export function QrScannerModal({ onScan, onClose }: QrScannerModalProps) {
@@ -85,8 +87,40 @@ export function QrScannerModal({ onScan, onClose }: QrScannerModalProps) {
   );
 }
 
+const TONE_META: Record<
+  ScanStatus,
+  { icon: typeof Check; label: string; iconBg: string; iconFg: string; text: string; bar: string }
+> = {
+  success: {
+    icon: Check,
+    label: "Credenciado",
+    iconBg: "bg-success/15",
+    iconFg: "text-success",
+    text: "text-success",
+    bar: "bg-success",
+  },
+  warning: {
+    icon: AlertTriangle,
+    label: "Atenção",
+    iconBg: "bg-warning/15",
+    iconFg: "text-warning",
+    text: "text-warning",
+    bar: "bg-warning",
+  },
+  error: {
+    icon: X,
+    label: "Não credenciado",
+    iconBg: "bg-danger/15",
+    iconFg: "text-danger",
+    text: "text-danger",
+    bar: "bg-danger",
+  },
+};
+
 function ScanResultCard({ feedback }: { feedback: ScanFeedback }) {
-  const tone = feedback.ok ? "success" : "danger";
+  const tone = TONE_META[feedback.status];
+  const Icon = tone.icon;
+
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/70 p-4">
       <div
@@ -94,23 +128,15 @@ function ScanResultCard({ feedback }: { feedback: ScanFeedback }) {
         className="w-full max-w-[260px] overflow-hidden rounded-xl bg-surface shadow-xl animate-scan-pop"
       >
         <div className="flex flex-col items-center gap-1.5 px-5 pb-5 pt-6 text-center">
-          <div
-            className={`mb-1 flex h-14 w-14 items-center justify-center rounded-full ${
-              tone === "success" ? "bg-success/15 text-success" : "bg-danger/15 text-danger"
-            }`}
-          >
-            {tone === "success" ? <Check size={28} /> : <X size={28} />}
+          <div className={`mb-1 flex h-14 w-14 items-center justify-center rounded-full ${tone.iconBg} ${tone.iconFg}`}>
+            <Icon size={28} />
           </div>
 
-          <p
-            className={`text-[11px] font-semibold uppercase tracking-wide ${
-              tone === "success" ? "text-success" : "text-danger"
-            }`}
-          >
-            {tone === "success" ? "Credenciado" : "Não credenciado"}
+          <p className={`text-[11px] font-semibold uppercase tracking-wide ${tone.text}`}>
+            {tone.label}
           </p>
 
-          {feedback.ok && feedback.name ? (
+          {feedback.status === "success" && feedback.name ? (
             <>
               <p className="text-lg font-semibold leading-tight text-ink">{feedback.name}</p>
               {feedback.subtitle ? (
@@ -122,13 +148,13 @@ function ScanResultCard({ feedback }: { feedback: ScanFeedback }) {
           )}
         </div>
 
-        <ScanProgressBar key={feedback.key} durationMs={FEEDBACK_DURATION_MS} tone={tone} />
+        <ScanProgressBar key={feedback.key} durationMs={FEEDBACK_DURATION_MS} barClassName={tone.bar} />
       </div>
     </div>
   );
 }
 
-function ScanProgressBar({ durationMs, tone }: { durationMs: number; tone: "success" | "danger" }) {
+function ScanProgressBar({ durationMs, barClassName }: { durationMs: number; barClassName: string }) {
   const [shrink, setShrink] = useState(false);
 
   useEffect(() => {
@@ -140,7 +166,7 @@ function ScanProgressBar({ durationMs, tone }: { durationMs: number; tone: "succ
   return (
     <div className="h-1 w-full bg-ink/10">
       <div
-        className={`h-full ${tone === "success" ? "bg-success" : "bg-danger"}`}
+        className={`h-full ${barClassName}`}
         style={{
           width: shrink ? "0%" : "100%",
           transitionProperty: "width",

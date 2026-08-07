@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Search, Check, QrCode } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { listTickets, checkInTicket, type TicketEntity } from "@/lib/api/tickets";
+import { ApiError } from "@/lib/api/client";
 import { translateApiError } from "@/lib/api/errorMessages";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -84,13 +85,17 @@ export function CredenciamentoTab({ eventId }: { eventId: string }) {
           : [...rows, updated],
       );
       return {
-        ok: true,
+        status: "success",
         message: "Entrada confirmada",
         name: updated.client?.name ?? "Participante",
         subtitle: updated.client?.email,
       };
     } catch (err) {
-      return { ok: false, message: translateApiError(err, "Não foi possível confirmar a entrada.") };
+      const alreadyCheckedIn = err instanceof ApiError && err.message === "Ticket already checked in";
+      return {
+        status: alreadyCheckedIn ? "warning" : "error",
+        message: translateApiError(err, "Não foi possível confirmar a entrada."),
+      };
     }
   }
 

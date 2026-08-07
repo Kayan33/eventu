@@ -22,6 +22,7 @@ const KNOWN_MESSAGES: Record<string, string> = {
   "Ticket not found": "Ingresso não encontrado.",
   "Only confirmed tickets can be checked in":
     "Só ingressos confirmados podem ser credenciados.",
+  "Ticket already checked in": "Ingresso já credenciado.",
 };
 
 export function translateApiError(err: unknown, fallback: string): string {

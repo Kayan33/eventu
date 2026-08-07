@@ -192,6 +192,9 @@ export class TicketsService {
 
   async checkIn(id: string, tenantId: string): Promise<Ticket> {
     const ticket = await this.findOne(id, { tenantId });
+    if (ticket.status === TicketStatus.USED) {
+      throw new BadRequestException('Ticket already checked in');
+    }
     if (ticket.status !== TicketStatus.CONFIRMED) {
       throw new BadRequestException('Only confirmed tickets can be checked in');
     }
