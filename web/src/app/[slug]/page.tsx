@@ -4,6 +4,7 @@ import { MapPin, Globe, Calendar } from "lucide-react";
 import { getEventBySlug } from "@/lib/api/events";
 import { formatDateRange } from "@/lib/utils/formatDate";
 import { TicketList } from "./_components/TicketList";
+import { EventPageHeader } from "./_components/EventPageHeader";
 import type { EventEntity } from "@/lib/types/event";
 
 interface PageProps {
@@ -47,6 +48,8 @@ export default async function EventLandingPage({ params }: PageProps) {
   return (
     <main className="min-h-screen bg-bg">
       <div className="mx-auto max-w-[1100px] px-4 pb-10 pt-5 sm:px-6 sm:pb-14 sm:pt-8">
+        <EventPageHeader slug={event.slug} />
+
         {event.coverImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
