@@ -15,6 +15,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { CertificatesModule } from './modules/certificates/certificates.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { EmailModule } from './modules/email/email.module';
 import { CronModule } from './cron/cron.module';
 
 @Module({
@@ -57,6 +58,7 @@ import { CronModule } from './cron/cron.module';
     PaymentsModule,
     CertificatesModule,
     AuthModule,
+    EmailModule,
     CronModule,
   ],
 })
