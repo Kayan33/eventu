@@ -45,12 +45,34 @@ export function TicketList({
 
   const anyAvailable = sortedTypes.some((t) => !isSoldOut(t));
 
+  const occupancyPct = totalCapacity
+    ? Math.min(100, Math.round((totalSold / totalCapacity) * 100))
+    : 0;
+
   return (
     <div>
       {isTotal ? (
-        <p className="mb-3 text-[13px] text-ink-soft">
-          {totalSold} de {totalCapacity} vagas ocupadas
-        </p>
+        <div className="mb-4">
+          <div className="mb-1.5 flex items-center justify-between text-[13px]">
+            <span className="text-ink-soft">
+              {totalSold} de {totalCapacity} vagas ocupadas
+            </span>
+            <span className={`font-medium ${totalRemaining > 0 ? "text-ink" : "text-danger"}`}>
+              {totalRemaining > 0
+                ? `${totalRemaining} vaga${totalRemaining === 1 ? "" : "s"} restante${totalRemaining === 1 ? "" : "s"}`
+                : "Esgotado"}
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-bar">
+            <div
+              className={`h-full rounded-full ${totalRemaining > 0 ? "bg-accent-700" : "bg-danger"}`}
+              style={{ width: `${occupancyPct}%` }}
+            />
+          </div>
+          <p className="mt-2 text-[13px] text-ink-soft">
+            Essas vagas são compartilhadas entre todos os tipos de ingresso abaixo.
+          </p>
+        </div>
       ) : null}
 
       {hasForm ? (
@@ -75,11 +97,11 @@ export function TicketList({
                   <div className="text-sm font-medium text-ink">{t.name}</div>
                   {soldOut ? (
                     <div className="mt-0.5 text-xs font-medium text-danger">Esgotado</div>
-                  ) : (
+                  ) : !isTotal ? (
                     <div className="mt-0.5 text-xs text-ink-soft">
                       {remaining} vaga{remaining === 1 ? "" : "s"} restante{remaining === 1 ? "" : "s"}
                     </div>
-                  )}
+                  ) : null}
                 </div>
                 {hasForm ? null : (
                   <div className="whitespace-nowrap text-sm font-semibold text-accent-700">
