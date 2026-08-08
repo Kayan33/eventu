@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -27,6 +28,8 @@ export interface AuthResult<T> {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly clientsService: ClientsService,
@@ -82,6 +85,7 @@ export class AuthService {
   async loginUser(dto: LoginDto): Promise<AuthResult<UserJwtPayload>> {
     const user = await this.usersService.findByEmail(dto.email);
     if (!user || !(await verifyPassword(user.passwordHash, dto.password))) {
+      this.logger.warn(`Failed staff login attempt for "${dto.email}"`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -97,6 +101,7 @@ export class AuthService {
   async loginClient(dto: LoginDto): Promise<AuthResult<ClientJwtPayload>> {
     const client = await this.clientsService.findByEmail(dto.email);
     if (!client || !(await verifyPassword(client.passwordHash, dto.password))) {
+      this.logger.warn(`Failed client login attempt for "${dto.email}"`);
       throw new UnauthorizedException('Invalid credentials');
     }
 

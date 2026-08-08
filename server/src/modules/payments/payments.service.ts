@@ -149,6 +149,7 @@ export class PaymentsService {
     id: string,
     dto: UpdatePaymentStatusDto,
     tenantId: string,
+    reviewerId: string,
   ): Promise<Payment> {
     const payment = await this.findOne(id, { tenantId });
     if (payment.status !== PaymentStatus.UPLOADED) {
@@ -171,6 +172,10 @@ export class PaymentsService {
         status: TicketStatus.CONFIRMED,
       });
     }
+
+    this.logger.log(
+      `Payment ${payment.id} (ticket ${payment.ticketId}) ${payment.status} by user ${reviewerId}`,
+    );
 
     return payment;
   }

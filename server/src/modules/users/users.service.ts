@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +15,8 @@ import { UserRole } from '../../common/enums/user-role.enum';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
@@ -60,8 +63,10 @@ export class UsersService {
     id: string,
     dto: UpdateUserDto,
     tenantId?: string,
+    actorId?: string,
   ): Promise<User> {
     const user = await this.findOne(id, tenantId);
+    const previousRole = user.role;
 
     if (dto.email && dto.email !== user.email) {
       const exists = await this.userRepository.findOne({
@@ -80,13 +85,24 @@ export class UsersService {
     const passwordHash = password ? await hashPassword(password) : undefined;
 
     Object.assign(user, { ...rest, ...(passwordHash && { passwordHash }) });
-    return await this.userRepository.save(user);
+    const saved = await this.userRepository.save(user);
+
+    if (dto.role && dto.role !== previousRole) {
+      this.logger.warn(
+        `User ${user.id} role changed from ${previousRole} to ${dto.role} by user ${actorId ?? 'unknown'}`,
+      );
+    }
+
+    return saved;
   }
 
-  async remove(id: string, tenantId?: string): Promise<void> {
+  async remove(id: string, tenantId?: string, actorId?: string): Promise<void> {
     const user = await this.findOne(id, tenantId);
     await this.assertNotLastAdmin(user);
     await this.userRepository.softDelete(id);
+    this.logger.warn(
+      `User ${user.id} (${user.email}) removed by user ${actorId ?? 'unknown'}`,
+    );
   }
 
   /** Throws if `user` is an admin and removing/demoting them would leave the tenant with none. */

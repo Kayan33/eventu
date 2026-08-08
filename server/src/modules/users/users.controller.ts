@@ -57,7 +57,7 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
     @CurrentActor() actor: UserJwtPayload,
   ) {
-    return this.usersService.update(id, dto, actor.tenantId);
+    return this.usersService.update(id, dto, actor.tenantId, actor.sub);
   }
 
   @ActorType('user')
@@ -68,6 +68,6 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentActor() actor: UserJwtPayload,
   ) {
-    return this.usersService.remove(id, actor.tenantId);
+    return this.usersService.remove(id, actor.tenantId, actor.sub);
   }
 }

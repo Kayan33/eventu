@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PaymentsService } from '../modules/payments/payments.service';
 
-
 @Injectable()
 export class CronService {
   constructor(private readonly paymentsService: PaymentsService) {}

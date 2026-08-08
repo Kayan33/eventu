@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -20,6 +21,8 @@ const PIX_QRCODE_MIME_EXTENSIONS: Record<string, string> = {
 
 @Injectable()
 export class TenantsService {
+  private readonly logger = new Logger(TenantsService.name);
+
   constructor(
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
@@ -56,10 +59,23 @@ export class TenantsService {
     id: string,
     dto: UpdateTenantDto,
     tenantId?: string,
+    actorId?: string,
   ): Promise<Tenant> {
     const tenant = await this.findOne(id, tenantId);
+    const pixKeyChanged =
+      dto.pixKey !== undefined && dto.pixKey !== tenant.pixKey;
+    const previousPixKey = tenant.pixKey;
+
     Object.assign(tenant, dto);
-    return await this.tenantRepository.save(tenant);
+    const saved = await this.tenantRepository.save(tenant);
+
+    if (pixKeyChanged) {
+      this.logger.warn(
+        `Tenant ${tenant.id} Pix key changed by user ${actorId ?? 'unknown'}: "${previousPixKey ?? '(none)'}" -> "${saved.pixKey}"`,
+      );
+    }
+
+    return saved;
   }
 
   async remove(id: string, tenantId?: string): Promise<void> {

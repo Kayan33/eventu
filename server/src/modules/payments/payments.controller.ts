@@ -99,6 +99,6 @@ export class PaymentsController {
     @Body() dto: UpdatePaymentStatusDto,
     @CurrentActor() actor: UserJwtPayload,
   ) {
-    return this.paymentsService.review(id, dto, actor.tenantId);
+    return this.paymentsService.review(id, dto, actor.tenantId, actor.sub);
   }
 }

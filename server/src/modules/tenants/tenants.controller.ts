@@ -59,7 +59,7 @@ export class TenantsController {
     @Body() dto: UpdateTenantDto,
     @CurrentActor() actor: UserJwtPayload,
   ) {
-    return this.tenantsService.update(id, dto, actor.tenantId);
+    return this.tenantsService.update(id, dto, actor.tenantId, actor.sub);
   }
 
   @ActorType('user')
