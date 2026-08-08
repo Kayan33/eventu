@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -20,9 +21,11 @@ export class Ticket {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Index()
   @Column()
   ticketTypeId!: string;
 
+  @Index()
   @Column()
   clientId!: string;
 
